@@ -22,7 +22,6 @@ Single-page application for an auto dealership platform: public catalog (models,
 - [Docker](#docker)
 - [Testing and code quality](#testing-and-code-quality)
 - [Path aliases](#path-aliases)
-- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 
