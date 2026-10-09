@@ -34,6 +34,12 @@ export function AccountLayout() {
               <NavLink to={ROUTES.customOrders} className={navLink}>
                 Индивидуальный заказ
               </NavLink>
+              <NavLink to={ROUTES.service} className={navLink}>
+                Сервисные записи
+              </NavLink>
+              <NavLink to={ROUTES.addresses} className={navLink}>
+                Адреса
+              </NavLink>
             </>
           ) : null}
           {staff ? (
@@ -41,11 +47,20 @@ export function AccountLayout() {
               <NavLink to={ROUTES.staffUsers} className={navLink}>
                 Пользователи (staff)
               </NavLink>
+              <NavLink to={ROUTES.staffDashboard} className={navLink}>
+                Dashboard
+              </NavLink>
               <NavLink to={ROUTES.staffOrders} className={navLink}>
                 Заказы (staff)
               </NavLink>
               <NavLink to={ROUTES.logs} className={navLink}>
                 Логи
+              </NavLink>
+              <NavLink to={ROUTES.staffOperations} className={navLink}>
+                Операции и сервис
+              </NavLink>
+              <NavLink to={ROUTES.staffInventory} className={navLink}>
+                Склад
               </NavLink>
             </>
           ) : null}

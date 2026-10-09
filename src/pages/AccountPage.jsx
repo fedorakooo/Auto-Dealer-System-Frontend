@@ -72,7 +72,7 @@ export function AccountPage() {
               {...register('date_of_birth')}
             />
             {mut.isError ? (
-              <p style={{ color: '#fca5a5' }}>{parseApiError(mut.error).message}</p>
+              <p className="form-error">{parseApiError(mut.error).message}</p>
             ) : null}
             <Button type="submit" disabled={mut.isPending}>
               Сохранить
