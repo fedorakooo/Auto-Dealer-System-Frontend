@@ -21,6 +21,7 @@ import { resolveMediaUrl } from '@/lib/mediaUrl.js'
 import { ROUTES } from '@/constants/routes.js'
 import { USER_ROLES } from '@/constants/roles.js'
 import { useState } from 'react'
+import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
 
 export function VehicleDetailPage() {
   const { id } = useParams()
@@ -97,13 +98,15 @@ export function VehicleDetailPage() {
           <img
             src={img}
             alt=""
-            style={{ width: '100%', borderRadius: 4, border: '1px solid var(--color-border)' }}
+            style={{ width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', borderRadius: 10, border: '1px solid var(--color-border)' }}
+            loading="lazy"
           />
         ) : (
-          <div style={{ aspectRatio: '16/10', background: '#1a1a1a', borderRadius: 4 }} />
+          <div style={{ aspectRatio: '16/10', background: 'var(--color-surface-subtle)', borderRadius: 10 }} aria-hidden="true" />
         )}
         <div>
-          <p style={{ fontSize: '1.5rem', fontWeight: 600 }}>{formatPrice(vehicle.price)}</p>
+          <p style={{ fontSize: '1.5rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text)' }}>{formatPrice(vehicle.price)}</p>
+          {vehicle.status ? <StatusBadge status={vehicle.status} /> : null}
           <p style={{ color: 'var(--color-text-muted)' }}>
             VIN: {vehicle.vin} · {vehicle.production_year} · {vehicle.exterior_color}
           </p>
@@ -114,7 +117,7 @@ export function VehicleDetailPage() {
           </p>
           {msg ? (
             <p
-              style={{ color: msg.startsWith('Заказ') ? 'var(--color-accent-strong)' : '#fca5a5' }}
+              style={{ color: msg.startsWith('Заказ') ? 'var(--color-success)' : 'var(--color-danger)' }}
             >
               {msg}
             </p>

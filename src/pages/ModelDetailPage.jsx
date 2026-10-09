@@ -127,11 +127,11 @@ export function ModelDetailPage() {
                 {...register('rating')}
               />
             </label>
-            {errors.rating ? <p style={{ color: '#fca5a5' }}>{errors.rating.message}</p> : null}
+            {errors.rating ? <p className="form-error">{errors.rating.message}</p> : null}
             <TextArea id="rev-title" label="Заголовок" {...register('title')} />
             <TextArea id="rev-comment" label="Комментарий" {...register('comment')} />
             {revMut.isError ? (
-              <p style={{ color: '#fca5a5' }}>{parseApiError(revMut.error).message}</p>
+              <p className="form-error">{parseApiError(revMut.error).message}</p>
             ) : null}
             <Button type="submit" disabled={isSubmitting || revMut.isPending}>
               Отправить отзыв

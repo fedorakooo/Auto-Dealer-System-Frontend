@@ -146,7 +146,7 @@ export function TestDrivesPage() {
           />
           <TextArea id="td-notes" label="Комментарий" {...register('notes')} />
           {mut.isError ? (
-            <p style={{ color: '#fca5a5' }}>{parseApiError(mut.error).message}</p>
+            <p className="form-error">{parseApiError(mut.error).message}</p>
           ) : null}
           <Button type="submit" disabled={mut.isPending}>
             Отправить
