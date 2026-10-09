@@ -23,6 +23,7 @@ export function RegisterPage() {
   const { register: registerUser } = useAuth()
   const navigate = useNavigate()
   const [formError, setFormError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -76,15 +77,14 @@ export function RegisterPage() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <Input
-          id="password"
-          label="Пароль"
-          type="password"
-          error={errors.password?.message}
-          {...register('password')}
-        />
+        <div className="relative">
+          <Input id="password" label="Пароль" type={showPassword ? 'text' : 'password'} autoComplete="new-password" error={errors.password?.message} {...register('password')} />
+          <button type="button" className="absolute right-3 top-9 text-sm font-medium text-[var(--color-info)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus)]" onClick={() => setShowPassword((value) => !value)} aria-pressed={showPassword}>
+            {showPassword ? 'Скрыть' : 'Показать'}
+          </button>
+        </div>
         {formError ? (
-          <p role="alert" style={{ color: '#fca5a5', marginBottom: '1rem' }}>
+          <p role="alert" className="form-error">
             {formError}
           </p>
         ) : null}
