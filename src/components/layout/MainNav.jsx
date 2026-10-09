@@ -38,6 +38,11 @@ export function MainNav() {
             </NavLink>
           ) : null}
           {staff ? (
+            <NavLink to={ROUTES.staffDashboard} style={linkStyle}>
+              Операционный центр
+            </NavLink>
+          ) : null}
+          {staff ? (
             <NavLink to={ROUTES.staffUsers} style={linkStyle}>
               Сотрудники
             </NavLink>
@@ -107,6 +112,11 @@ export function MainNav() {
             {user ? (
               <NavLink to={ROUTES.account} onClick={() => setOpen(false)}>
                 Кабинет
+              </NavLink>
+            ) : null}
+            {staff ? (
+              <NavLink to={ROUTES.staffDashboard} onClick={() => setOpen(false)}>
+                Операционный центр
               </NavLink>
             ) : null}
             {staff ? (
