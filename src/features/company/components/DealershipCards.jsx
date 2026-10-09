@@ -30,24 +30,24 @@ export function DealershipCards() {
           <article
             key={d.id}
             className={clsx(
-              'overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900',
-              open && 'ring-2 ring-zinc-400 dark:ring-zinc-600'
+              'overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]',
+              open && 'ring-2 ring-[var(--color-focus)]'
             )}
           >
             <div className="p-4">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{d.name}</h3>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{d.address}</p>
+              <h3 className="font-semibold text-[var(--color-text)]">{d.name}</h3>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">{d.address}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="text-sm font-medium text-zinc-900 underline dark:text-zinc-100"
+                  className="text-sm font-medium text-[var(--color-text)] underline"
                   onClick={() => setExpandedId(open ? null : d.id)}
                 >
                   {open ? 'Свернуть' : 'Подробнее'}
                 </button>
                 <Link
                   to={ROUTES.dealershipDetail(d.id)}
-                  className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400"
+                  className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                 >
                   Страница салона
                 </Link>

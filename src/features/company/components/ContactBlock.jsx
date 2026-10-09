@@ -9,13 +9,13 @@ export function ContactBlock() {
   return (
     <Card>
       <CardBody>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Связаться</h2>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <h2 className="text-lg font-semibold text-[var(--color-text)]">Связаться</h2>
+        <ul className="mt-3 space-y-2 text-sm text-[var(--color-text-muted)]">
           <li>
             Телефон:{' '}
             <a
               href={`tel:${CONTACT_PHONE_E164}`}
-              className="font-medium text-zinc-900 dark:text-zinc-100"
+              className="font-medium text-[var(--color-text)]"
             >
               {CONTACT_PHONE_DISPLAY}
             </a>
@@ -24,7 +24,7 @@ export function ContactBlock() {
             Email:{' '}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="font-medium text-zinc-900 dark:text-zinc-100"
+              className="font-medium text-[var(--color-text)]"
             >
               {CONTACT_EMAIL}
             </a>

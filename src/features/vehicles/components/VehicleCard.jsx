@@ -16,20 +16,20 @@ export function VehicleCard({ vehicle }) {
       ) : (
         <div
           className={clsx(
-            'aspect-[16/10] bg-gradient-to-br from-zinc-900 to-zinc-800',
-            'border-b border-zinc-800 dark:border-zinc-800'
+            'aspect-[16/10] bg-[var(--color-surface-subtle)]',
+            'border-b border-[var(--color-border)]'
           )}
           aria-hidden
         />
       )}
       <CardBody className="px-4 py-4">
-        <h3 className="mb-1 text-base font-semibold text-zinc-100">
+        <h3 className="mb-1 text-base font-semibold text-[var(--color-text)]">
           {vehicle.model_name || 'Автомобиль'}
         </h3>
-        <p className="mb-2 text-sm text-zinc-500">
+        <p className="mb-2 line-clamp-2 text-sm text-[var(--color-text-muted)]">
           {vehicle.production_year} · {vehicle.exterior_color}
         </p>
-        <p className="mb-4 text-lg font-semibold tracking-wide text-zinc-200">
+        <p className="mb-4 text-lg font-semibold tracking-wide text-[var(--color-text)] [font-variant-numeric:tabular-nums]">
           {formatPrice(vehicle.price)}
         </p>
         <Link to={ROUTES.vehicleDetail(vehicle.id)}>

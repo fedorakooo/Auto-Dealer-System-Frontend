@@ -2,16 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchVehicle, fetchVehicles } from '@/features/vehicles/vehicleService.js'
 import { vehicleResponseSchema, vehiclesResponseSchema } from '@/features/vehicles/schemas.js'
 import { QK } from '@/constants/queryKeys.js'
-export function useVehiclesCatalogQuery(api, page) {
+export function useVehiclesCatalogQuery(api, params) {
   return useQuery({
     queryKey: QK.vehicles({
-      page,
+      ...params,
       is_active: true,
     }),
     queryFn: async () => {
       const raw = await fetchVehicles(api, {
-        page,
         limit: 12,
+        ...params,
         is_active: true,
       })
       return vehiclesResponseSchema.parse(raw)
