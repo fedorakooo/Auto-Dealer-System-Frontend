@@ -4,9 +4,12 @@ import { Footer } from '@/shared/ui/Footer.jsx'
 import { Container } from '@/shared/ui/Container.jsx'
 export function MainLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+    <div className="flex min-h-screen flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
+      <a href="#main-content" className="skip-link">
+        Перейти к содержимому
+      </a>
       <Navbar />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex="-1">
         <Container className="py-8">
           <Outlet />
         </Container>
