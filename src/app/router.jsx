@@ -36,6 +36,11 @@ const LogsPage = lazyNamed(() => import('@/pages/LogsPage.jsx'), 'LogsPage')
 const ForbiddenPage = lazyNamed(() => import('@/pages/ForbiddenPage.jsx'), 'ForbiddenPage')
 const NotFoundPage = lazyNamed(() => import('@/pages/NotFoundPage.jsx'), 'NotFoundPage')
 const CompanyPage = lazyNamed(() => import('@/pages/CompanyPage.jsx'), 'CompanyPage')
+const ServiceAppointmentsPage = lazyNamed(() => import('@/pages/ServiceAppointmentsPage.jsx'), 'ServiceAppointmentsPage')
+const AddressesPage = lazyNamed(() => import('@/pages/AddressesPage.jsx'), 'AddressesPage')
+const StaffDashboardPage = lazyNamed(() => import('@/pages/StaffDashboardPage.jsx'), 'StaffDashboardPage')
+const StaffOperationsPage = lazyNamed(() => import('@/pages/StaffOperationsPage.jsx'), 'StaffOperationsPage')
+const StaffInventoryPage = lazyNamed(() => import('@/pages/StaffInventoryPage.jsx'), 'StaffInventoryPage')
 
 function wrap(page) {
   return <FeatureErrorBoundary>{page}</FeatureErrorBoundary>
@@ -79,11 +84,17 @@ export const router = createBrowserRouter([
                   { path: 'favorites', element: wrap(<FavoritesPage />) },
                   { path: 'test-drives', element: wrap(<TestDrivesPage />) },
                   { path: 'custom-orders', element: wrap(<CustomOrdersPage />) },
+                  { path: 'service', element: wrap(<ServiceAppointmentsPage />) },
+                  { path: 'addresses', element: wrap(<AddressesPage />) },
                 ],
               },
             ],
           },
 
+          {
+            path: 'staff',
+            element: <ProtectedRoute><StaffRoute>{wrap(<StaffDashboardPage />)}</StaffRoute></ProtectedRoute>,
+          },
           {
             path: 'staff/users',
             element: (
@@ -91,6 +102,14 @@ export const router = createBrowserRouter([
                 <StaffRoute>{wrap(<StaffUsersPage />)}</StaffRoute>
               </ProtectedRoute>
             ),
+          },
+          {
+            path: 'staff/operations',
+            element: <ProtectedRoute><StaffRoute>{wrap(<StaffOperationsPage />)}</StaffRoute></ProtectedRoute>,
+          },
+          {
+            path: 'staff/inventory',
+            element: <ProtectedRoute><StaffRoute>{wrap(<StaffInventoryPage />)}</StaffRoute></ProtectedRoute>,
           },
           {
             path: 'staff/orders',
