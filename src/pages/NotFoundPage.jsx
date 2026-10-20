@@ -1,12 +1,11 @@
-import { Link } from 'react-router-dom'
-import { ROUTES } from '@/constants/routes.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { StatusPage } from '@/shared/ui/StatusPage.jsx'
 
 export function NotFoundPage() {
   return (
-    <div>
-      <PageHeader kicker="404" title="Страница не найдена" />
-      <Link to={ROUTES.home}>На главную</Link>
-    </div>
+    <StatusPage
+      code="404"
+      title="Страница не найдена"
+      description="Возможно, адрес введён с ошибкой или страница была перемещена."
+    />
   )
 }

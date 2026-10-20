@@ -1,16 +1,11 @@
-import { Link } from 'react-router-dom'
-import { ROUTES } from '@/constants/routes.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { StatusPage } from '@/shared/ui/StatusPage.jsx'
 
 export function ForbiddenPage() {
   return (
-    <div>
-      <PageHeader
-        kicker="403"
-        title="Доступ запрещён"
-        subtitle="Недостаточно прав для этого раздела."
-      />
-      <Link to={ROUTES.home}>На главную</Link>
-    </div>
+    <StatusPage
+      code="403"
+      title="Доступ запрещён"
+      description="У вашей учётной записи недостаточно прав для этого раздела."
+    />
   )
 }

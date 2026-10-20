@@ -1,42 +1,54 @@
 import { Link } from 'react-router-dom'
-import clsx from 'clsx'
 import { Card, CardBody, CardMedia } from '@/shared/ui/Card.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
+import { Icon } from '@/shared/ui/Icon.jsx'
 import { ROUTES } from '@/constants/routes.js'
 import { formatPrice } from '@/lib/format.js'
 import { resolveMediaUrl } from '@/lib/mediaUrl.js'
+
 export function VehicleCard({ vehicle }) {
-  const img = vehicle.images?.[0] ? resolveMediaUrl(vehicle.images[0]) : null
+  const image = vehicle.images?.[0] ? resolveMediaUrl(vehicle.images[0]) : null
+  const title = vehicle.model_name || 'Автомобиль'
+
   return (
-    <Card interactive>
-      {img ? (
-        <CardMedia className="relative aspect-[16/10] overflow-hidden">
-          <img src={img} alt="" className="h-full w-full object-cover" loading="lazy" />
-        </CardMedia>
-      ) : (
-        <div
-          className={clsx(
-            'aspect-[16/10] bg-[var(--color-surface-subtle)]',
-            'border-b border-[var(--color-border)]'
-          )}
-          aria-hidden
-        />
-      )}
-      <CardBody className="px-4 py-4">
+    <Card interactive className="group flex h-full flex-col">
+      <CardMedia className="relative aspect-[16/10] overflow-hidden">
+        {image ? (
+          <img
+            src={image}
+            alt=""
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] motion-reduce:transform-none"
+            loading="lazy"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center text-slate-300" aria-hidden="true">
+            <Icon name="car" className="h-14 w-14" />
+          </div>
+        )}
+      </CardMedia>
+      <CardBody className="flex flex-1 flex-col px-5 py-4">
         <h3 className="mb-1 text-base font-semibold text-[var(--color-text)]">
-          {vehicle.model_name || 'Автомобиль'}
+          <Link
+            to={ROUTES.vehicleDetail(vehicle.id)}
+            className="text-[var(--color-text)] after:absolute after:inset-0 after:content-[''] hover:text-[var(--color-text)] focus-visible:outline-none"
+          >
+            {title}
+          </Link>
         </h3>
-        <p className="mb-2 line-clamp-2 text-sm text-[var(--color-text-muted)]">
+        <p className="mb-4 text-sm text-[var(--color-text-muted)]">
           {vehicle.production_year} · {vehicle.exterior_color}
         </p>
-        <p className="mb-4 text-lg font-semibold tracking-wide text-[var(--color-text)] [font-variant-numeric:tabular-nums]">
-          {formatPrice(vehicle.price)}
-        </p>
-        <Link to={ROUTES.vehicleDetail(vehicle.id)}>
-          <Button variant="secondary" fullWidth>
+        <div className="mt-auto flex items-end justify-between gap-3">
+          <p className="mb-0 text-lg font-semibold tracking-tight text-[var(--color-text)] [font-variant-numeric:tabular-nums]">
+            {formatPrice(vehicle.price)}
+          </p>
+          <span
+            className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-accent-strong)] transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          >
             Подробнее
-          </Button>
-        </Link>
+            <Icon name="arrowRight" className="h-4 w-4" />
+          </span>
+        </div>
       </CardBody>
     </Card>
   )
