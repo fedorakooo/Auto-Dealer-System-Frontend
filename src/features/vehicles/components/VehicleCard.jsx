@@ -1,20 +1,21 @@
 import { Link } from 'react-router-dom'
 import { Card, CardBody, CardMedia } from '@/shared/ui/Card.jsx'
+import { Badge } from '@/shared/ui/Badge.jsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
 import { ROUTES } from '@/constants/routes.js'
 import { formatPrice } from '@/lib/format.js'
-import { resolveMediaUrl } from '@/lib/mediaUrl.js'
+import { getVehiclePhotos } from '@/lib/photos.js'
 
 export function VehicleCard({ vehicle }) {
-  const image = vehicle.images?.[0] ? resolveMediaUrl(vehicle.images[0]) : null
+  const { cover, coverIsModelPhoto } = getVehiclePhotos(vehicle)
   const title = vehicle.model_name || 'Автомобиль'
 
   return (
     <Card interactive className="group flex h-full flex-col">
       <CardMedia className="relative aspect-[16/10] overflow-hidden">
-        {image ? (
+        {cover ? (
           <img
-            src={image}
+            src={cover}
             alt=""
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] motion-reduce:transform-none"
             loading="lazy"
@@ -24,6 +25,11 @@ export function VehicleCard({ vehicle }) {
             <Icon name="car" className="h-14 w-14" />
           </div>
         )}
+        {coverIsModelPhoto ? (
+          <Badge tone="neutral" className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm">
+            Фото модели
+          </Badge>
+        ) : null}
       </CardMedia>
       <CardBody className="flex flex-1 flex-col px-5 py-4">
         <h3 className="mb-1 text-base font-semibold text-[var(--color-text)]">

@@ -16,13 +16,14 @@ import { ROUTES } from '@/constants/routes.js'
 import { USER_ROLES } from '@/constants/roles.js'
 import { parseApiError } from '@/services/api'
 import { formatPrice } from '@/lib/format.js'
-import { resolveMediaUrl } from '@/lib/mediaUrl.js'
+import { getVehiclePhotos } from '@/lib/photos.js'
 import { Alert } from '@/shared/ui/Alert.jsx'
 import { Breadcrumbs } from '@/shared/ui/Breadcrumbs.jsx'
 import { Button, LinkButton } from '@/shared/ui/Button.jsx'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog.jsx'
 import { DescriptionList } from '@/shared/ui/DescriptionList.jsx'
 import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { Gallery } from '@/shared/ui/Gallery.jsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
 import { Panel } from '@/shared/ui/Panel.jsx'
 import { Spinner } from '@/shared/ui/Spinner.jsx'
@@ -98,27 +99,25 @@ export function VehicleDetailPage() {
   }
 
   const vehicle = vehicleQuery.data
-  const image = vehicle.images?.[0] ? resolveMediaUrl(vehicle.images[0]) : null
+  const photos = getVehiclePhotos(vehicle)
   const isCustomer = user?.role === USER_ROLES.customer
   const canBuy = isCustomer && customer && !customerLoading
   const title = vehicle.model_name || 'Автомобиль'
+  // Show the car's own photos first; fall back to the model's appearance when none were uploaded.
+  const galleryPhotos = photos.own.length ? photos.own : photos.model
 
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Автомобили', to: ROUTES.vehicles }, { label: title }]} />
 
       <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)]">
-          {image ? (
-            <img src={image} alt={title} className="aspect-[16/10] w-full object-cover" />
-          ) : (
-            <div
-              className="grid aspect-[16/10] w-full place-items-center text-slate-300"
-              aria-hidden="true"
-            >
-              <Icon name="car" className="h-24 w-24" />
-            </div>
-          )}
+        <div>
+          <Gallery photos={galleryPhotos} alt={title} />
+          {photos.coverIsModelPhoto ? (
+            <p className="mt-3 mb-0 text-sm">
+              Фото этого экземпляра пока нет — показан внешний вид модели.
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-5">
@@ -165,18 +164,26 @@ export function VehicleDetailPage() {
             </Alert>
           ) : null}
 
-          <LinkButton
-            to={ROUTES.dealershipDetail(vehicle.dealership_id)}
-            variant="ghost"
-            icon="arrowRight"
-            className="self-start"
-          >
-            Контакты салона #{vehicle.dealership_id}
-          </LinkButton>
+          <div className="flex flex-wrap gap-2">
+            <LinkButton
+              to={ROUTES.modelDetail(vehicle.model_id)}
+              variant="secondary"
+              icon="arrowRight"
+            >
+              О модели
+            </LinkButton>
+            <LinkButton
+              to={ROUTES.dealershipDetail(vehicle.dealership_id)}
+              variant="ghost"
+              icon="arrowRight"
+            >
+              Контакты салона #{vehicle.dealership_id}
+            </LinkButton>
+          </div>
         </div>
       </div>
 
-      <Panel title="Характеристики" className="mt-10">
+      <Panel title="Характеристики экземпляра" className="mt-10">
         <DescriptionList
           items={[
             { label: 'VIN', value: vehicle.vin },
@@ -186,6 +193,16 @@ export function VehicleDetailPage() {
           ]}
         />
       </Panel>
+
+      {photos.own.length && photos.model.length ? (
+        <Panel
+          title="Внешний вид модели"
+          description="Фотографии модели в целом — они могут отличаться от конкретного экземпляра."
+          className="mt-6"
+        >
+          <Gallery photos={photos.model} alt={`${title} — модель`} />
+        </Panel>
+      ) : null}
 
       <ConfirmDialog
         open={confirmOpen}

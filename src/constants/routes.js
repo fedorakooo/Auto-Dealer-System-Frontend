@@ -23,6 +23,7 @@ export const ROUTES = {
   staffOrders: '/staff/orders',
   staffOperations: '/staff/operations',
   staffInventory: '/staff/inventory',
+  staffMedia: '/staff/media',
   logs: '/staff/logs',
   forbidden: '/forbidden',
 }

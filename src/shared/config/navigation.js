@@ -22,6 +22,7 @@ export const STAFF_NAV = [
   { to: ROUTES.staffOrders, label: 'Заказы', icon: 'receipt' },
   { to: ROUTES.staffOperations, label: 'Операции и сервис', icon: 'wrench' },
   { to: ROUTES.staffInventory, label: 'Склад', icon: 'box' },
+  { to: ROUTES.staffMedia, label: 'Фотографии', icon: 'car' },
   { to: ROUTES.staffUsers, label: 'Пользователи', icon: 'users' },
   { to: ROUTES.logs, label: 'Логи и отчёты', icon: 'clipboard' },
 ]

@@ -50,6 +50,7 @@ const StaffInventoryPage = page(
   'StaffInventoryPage',
   () => import('@/pages/StaffInventoryPage.jsx')
 )
+const StaffMediaPage = page('StaffMediaPage', () => import('@/pages/StaffMediaPage.jsx'))
 const LogsPage = page('LogsPage', () => import('@/pages/LogsPage.jsx'))
 const ForbiddenPage = page('ForbiddenPage', () => import('@/pages/ForbiddenPage.jsx'))
 const NotFoundPage = page('NotFoundPage', () => import('@/pages/NotFoundPage.jsx'))
@@ -116,6 +117,7 @@ export const router = createBrowserRouter([
                       { path: 'orders', element: wrap(<StaffOrdersPage />) },
                       { path: 'operations', element: wrap(<StaffOperationsPage />) },
                       { path: 'inventory', element: wrap(<StaffInventoryPage />) },
+                      { path: 'media', element: wrap(<StaffMediaPage />) },
                       { path: 'logs', element: wrap(<LogsPage />) },
                     ],
                   },

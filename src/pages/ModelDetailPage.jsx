@@ -12,10 +12,12 @@ import { parseApiError } from '@/services/api'
 import { ROUTES } from '@/constants/routes.js'
 import { USER_ROLES } from '@/constants/roles.js'
 import { QK } from '@/constants/queryKeys.js'
+import { getModelPhotos } from '@/lib/photos.js'
 import { Alert } from '@/shared/ui/Alert.jsx'
 import { Breadcrumbs } from '@/shared/ui/Breadcrumbs.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
+import { Button, LinkButton } from '@/shared/ui/Button.jsx'
 import { DescriptionList } from '@/shared/ui/DescriptionList.jsx'
+import { Gallery } from '@/shared/ui/Gallery.jsx'
 import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
 import { PageHeader } from '@/shared/ui/PageHeader.jsx'
@@ -88,6 +90,21 @@ export function ModelDetailPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Модели', to: ROUTES.models }, { label: model.name }]} />
       <PageHeader kicker="Модель" title={model.name} subtitle={model.description || undefined} />
+
+      <div className="mb-8 grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-start">
+        <Gallery photos={getModelPhotos(model)} alt={model.name} />
+        <Panel title="Автомобили в наличии">
+          <p className="text-sm">
+            Конкретные экземпляры этой модели с фотографиями, ценой и комплектацией.
+          </p>
+          <LinkButton
+            to={`${ROUTES.vehicles}?model_name=${encodeURIComponent(model.name)}`}
+            icon="arrowRight"
+          >
+            Смотреть в каталоге
+          </LinkButton>
+        </Panel>
+      </div>
 
       <Panel title="Характеристики" className="mb-8">
         <DescriptionList

@@ -48,5 +48,7 @@ export const endpoints = {
   testDriveStatus: (id) => `/test-drives/${id}/status`,
   favorites: '/favorites',
   favoritesByCustomer: (customerId) => `/favorites/customer/${customerId}`,
+  modelMedia: '/model-media',
+  vehicleMedia: '/vehicle-media',
   logs: '/logs',
 }

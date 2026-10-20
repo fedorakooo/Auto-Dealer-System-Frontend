@@ -14,6 +14,7 @@ export const modelResponseSchema = z.object({
   drive_type: z.string().nullable().optional(),
   created_at: z.string().nullable().optional(),
   updated_at: z.string().nullable().optional(),
+  images: z.array(z.string()).nullable().optional(),
 })
 
 export const modelsResponseSchema = z.object({
