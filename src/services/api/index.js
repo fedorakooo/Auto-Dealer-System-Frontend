@@ -2,7 +2,6 @@ export { createApiClient } from '@/services/api/client.js'
 export { attachAuthInterceptors } from '@/services/api/interceptors.js'
 export { parseApiError, normalizeApiError } from '@/services/api/errors.js'
 export { endpoints } from '@/services/api/endpoints.js'
-export { createGeneratedApiClient } from '@/services/api/generated/client.js'
 export {
   getAccessToken,
   getRefreshToken,
