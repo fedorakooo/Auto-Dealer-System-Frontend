@@ -1,32 +1,54 @@
+import { useState } from 'react'
 import clsx from 'clsx'
-const fieldClass =
-  'w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-base text-[var(--color-text)] shadow-sm placeholder:text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-primary-hover)] focus:border-[var(--color-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--color-info-subtle)] disabled:cursor-not-allowed disabled:opacity-50'
-export function Input({ id, label, error, hint, className = '', ...rest }) {
+import { Field, fieldControlClass } from '@/shared/ui/Field.jsx'
+import { Icon } from '@/shared/ui/Icon.jsx'
+
+export function Input({ id, label, error, hint, required, className, inputClassName, ...rest }) {
   return (
-    <div className={clsx('mb-4 flex flex-col gap-1', className)}>
-      <label htmlFor={id} className="text-xs font-medium tracking-wider text-[var(--color-text-muted)] uppercase">
-        {label}
-      </label>
-      <input
-        id={id}
-        className={clsx(
-          fieldClass,
-          error && 'border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger-subtle)]'
-        )}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
-        {...rest}
-      />
-      {error ? (
-        <span id={`${id}-error`} className="text-sm text-[var(--color-danger)]" role="alert">
-          {error}
-        </span>
-      ) : null}
-      {hint && !error ? (
-        <span id={`${id}-hint`} className="text-sm text-[var(--color-text-muted)]">
-          {hint}
-        </span>
-      ) : null}
-    </div>
+    <Field
+      id={id}
+      label={label}
+      error={error}
+      hint={hint}
+      required={required}
+      className={className}
+    >
+      {(aria) => <input className={clsx(fieldControlClass, inputClassName)} {...aria} {...rest} />}
+    </Field>
+  )
+}
+
+/** Password input with a built-in show/hide toggle that stays aligned when errors appear. */
+export function PasswordInput({ id, label, error, hint, required, className, ...rest }) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <Field
+      id={id}
+      label={label}
+      error={error}
+      hint={hint}
+      required={required}
+      className={className}
+    >
+      {(aria) => (
+        <div className="relative">
+          <input
+            className={clsx(fieldControlClass, 'pr-11')}
+            type={visible ? 'text' : 'password'}
+            {...aria}
+            {...rest}
+          />
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus)]"
+            onClick={() => setVisible((value) => !value)}
+            aria-label={visible ? 'Скрыть пароль' : 'Показать пароль'}
+            aria-pressed={visible}
+          >
+            <Icon name={visible ? 'eyeOff' : 'eye'} className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+    </Field>
   )
 }

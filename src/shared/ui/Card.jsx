@@ -1,11 +1,13 @@
 import clsx from 'clsx'
+
+/** Set `interactive` when the card contains a stretched link (`after:absolute after:inset-0`). */
 export function Card({ children, interactive, className }) {
   return (
     <article
       className={clsx(
-        'overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]',
+        'relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]',
         interactive &&
-          'cursor-pointer transition hover:-translate-y-0.5 hover:border-[var(--color-primary-hover)] hover:shadow-[var(--shadow-card-hover)] motion-reduce:hover:translate-y-0',
+          'transition duration-200 focus-within:ring-2 focus-within:ring-[var(--color-focus)] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[var(--shadow-card-hover)] motion-reduce:transition-none motion-reduce:hover:translate-y-0',
         className
       )}
     >
@@ -13,6 +15,7 @@ export function Card({ children, interactive, className }) {
     </article>
   )
 }
+
 export function CardMedia({ children, className }) {
   return (
     <div
@@ -25,6 +28,7 @@ export function CardMedia({ children, className }) {
     </div>
   )
 }
+
 export function CardHeader({ children, className }) {
   return (
     <div className={clsx('border-b border-[var(--color-border)] px-5 py-4', className)}>
@@ -32,6 +36,7 @@ export function CardHeader({ children, className }) {
     </div>
   )
 }
+
 export function CardBody({ children, className }) {
   return <div className={clsx('px-5 py-4', className)}>{children}</div>
 }
