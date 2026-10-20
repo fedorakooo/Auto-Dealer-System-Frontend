@@ -7,7 +7,7 @@ dist-ssr/
 .env.*
 !.env.example
 
-logs/
+/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*

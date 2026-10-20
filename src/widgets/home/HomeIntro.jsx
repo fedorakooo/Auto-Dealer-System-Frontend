@@ -1,30 +1,56 @@
-import { Link } from 'react-router-dom'
-import { Button } from '@/shared/ui/Button.jsx'
-import { ROUTES } from '@/constants/routes.js'
+const benefits = [
+  {
+    number: '01',
+    title: 'Удобный подбор',
+    text: 'Фильтры по модели, цене и характеристикам без лишних шагов.',
+  },
+  {
+    number: '02',
+    title: 'Запись онлайн',
+    text: 'Планируйте тест-драйв и сервисный визит в личном кабинете.',
+  },
+  {
+    number: '03',
+    title: 'Всё в одном месте',
+    text: 'Каталог, дилерские центры, заказы и обслуживание в одном интерфейсе.',
+  },
+]
 
 export function HomeIntro() {
   return (
-    <section className="border-b border-zinc-200 bg-gradient-to-b from-zinc-50 to-white py-16 dark:border-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
+    <section
+      className="border-b border-[var(--color-border)] bg-[var(--color-surface)] py-14 sm:py-16"
+      aria-labelledby="benefits-title"
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <p className="text-xs font-semibold tracking-[0.25em] text-zinc-500 uppercase">
-          Premium selection
-        </p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl dark:text-zinc-50">
-          Автомобили, которые соответствуют вашим ожиданиям
-        </h1>
-        <p className="mt-4 max-w-2xl text-zinc-600 dark:text-zinc-400">
-          Каталог в наличии, модельный ряд и сервис записи на тест-драйв — в одном интерфейсе Auto
-          Dealer System.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link to={ROUTES.vehicles}>
-            <Button type="button">Смотреть автомобили</Button>
-          </Link>
-          <Link to={ROUTES.models}>
-            <Button type="button" variant="secondary">
-              Модельный ряд
-            </Button>
-          </Link>
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_2.2fr] lg:items-start">
+          <div>
+            <p className="mb-3 text-xs font-semibold tracking-[0.22em] text-[var(--color-accent)] uppercase">
+              Продумано для вас
+            </p>
+            <h2
+              id="benefits-title"
+              className="max-w-xs text-2xl tracking-[-0.025em] text-[var(--color-text)] sm:text-3xl"
+            >
+              От выбора до сервисного визита
+            </h2>
+          </div>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {benefits.map((benefit) => (
+              <article
+                key={benefit.number}
+                className="border-l-2 border-[var(--color-border)] pl-5 transition-colors hover:border-[var(--color-accent)]"
+              >
+                <span className="text-xs font-semibold tracking-[0.16em] text-[var(--color-accent)]">
+                  {benefit.number}
+                </span>
+                <h3 className="mt-3 mb-2 text-base text-[var(--color-text)]">{benefit.title}</h3>
+                <p className="mb-0 text-sm leading-6 text-[var(--color-text-muted)]">
+                  {benefit.text}
+                </p>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

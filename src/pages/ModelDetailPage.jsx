@@ -8,18 +8,26 @@ import { useCustomerRecord } from '@/features/customers/hooks/useCustomerRecord.
 import { createReview } from '@/features/reviews/reviewService.js'
 import { useModelDetailQuery } from '@/features/models/hooks/useModelQueries.js'
 import { useReviewsByModelQuery } from '@/features/reviews/hooks/useReviewsByModelQuery.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
-import { Stack } from '@/shared/ui/Stack.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
-import { TextArea } from '@/shared/ui/Textarea.jsx'
-import { Spinner } from '@/shared/ui/Spinner.jsx'
-import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
 import { parseApiError } from '@/services/api'
+import { ROUTES } from '@/constants/routes.js'
 import { USER_ROLES } from '@/constants/roles.js'
 import { QK } from '@/constants/queryKeys.js'
+import { Alert } from '@/shared/ui/Alert.jsx'
+import { Breadcrumbs } from '@/shared/ui/Breadcrumbs.jsx'
+import { Button } from '@/shared/ui/Button.jsx'
+import { DescriptionList } from '@/shared/ui/DescriptionList.jsx'
+import { EmptyState } from '@/shared/ui/EmptyState.jsx'
+import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { Panel } from '@/shared/ui/Panel.jsx'
+import { Select } from '@/shared/ui/Select.jsx'
+import { Skeleton } from '@/shared/ui/Skeleton.jsx'
+import { Spinner } from '@/shared/ui/Spinner.jsx'
+import { StarRating } from '@/shared/ui/StarRating.jsx'
+import { Textarea } from '@/shared/ui/Textarea.jsx'
 
 const reviewSchema = z.object({
-  rating: z.coerce.number().min(1).max(5),
+  rating: z.coerce.number().min(1, 'Выберите оценку').max(5),
   title: z.string().optional(),
   comment: z.string().optional(),
 })
@@ -28,21 +36,21 @@ export function ModelDetailPage() {
   const { id } = useParams()
   const { api, user } = useAuth()
   const { data: customer } = useCustomerRecord()
-  const qc = useQueryClient()
+  const queryClient = useQueryClient()
 
-  const mq = useModelDetailQuery(api, id)
-  const rq = useReviewsByModelQuery(api, id)
+  const modelQuery = useModelDetailQuery(api, id)
+  const reviewsQuery = useReviewsByModelQuery(api, id)
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({ resolver: zodResolver(reviewSchema), defaultValues: { rating: 5 } })
 
-  const revMut = useMutation({
+  const reviewMutation = useMutation({
     mutationFn: async (values) => {
-      if (!customer) throw new Error('Нет профиля customer')
+      if (!customer) throw new Error('Профиль покупателя не найден')
       await createReview(api, {
         customer_id: customer.id,
         model_id: id,
@@ -52,93 +60,105 @@ export function ModelDetailPage() {
       })
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.reviewsByModel(id) })
+      queryClient.invalidateQueries({ queryKey: QK.reviewsByModel(id) })
       reset()
     },
   })
 
-  if (mq.isLoading) return <Spinner />
-  if (mq.isError || !mq.data) {
-    return <ErrorFallback message={parseApiError(mq.error).message} onRetry={() => mq.refetch()} />
+  if (modelQuery.isLoading) return <Spinner />
+  if (modelQuery.isError || !modelQuery.data) {
+    return (
+      <ErrorFallback
+        message={parseApiError(modelQuery.error).message}
+        onRetry={() => modelQuery.refetch()}
+      />
+    )
   }
 
-  const m = mq.data
+  const model = modelQuery.data
   const canReview = user?.role === USER_ROLES.customer && customer
+  const reviews = reviewsQuery.data?.reviews ?? []
+  const years = model.production_year_end
+    ? `${model.production_year_start} — ${model.production_year_end}`
+    : model.production_year_start
+      ? `с ${model.production_year_start}`
+      : null
 
   return (
     <div>
-      <PageHeader kicker="Модель" title={m.name} />
-      <p style={{ color: 'var(--color-text-muted)', maxWidth: '40rem' }}>
-        {m.description || 'Описание появится позже.'}
-      </p>
-      <dl style={{ display: 'grid', gap: '0.5rem', marginTop: '1.5rem', fontSize: '0.9rem' }}>
-        <dt style={{ color: 'var(--color-text-muted)' }}>Привод</dt>
-        <dd style={{ margin: 0 }}>{m.drive_type || '—'}</dd>
-        <dt style={{ color: 'var(--color-text-muted)' }}>Годы производства</dt>
-        <dd style={{ margin: 0 }}>
-          {m.production_year_start}
-          {m.production_year_end ? ` — ${m.production_year_end}` : ''}
-        </dd>
-      </dl>
+      <Breadcrumbs items={[{ label: 'Модели', to: ROUTES.models }, { label: model.name }]} />
+      <PageHeader kicker="Модель" title={model.name} subtitle={model.description || undefined} />
 
-      <section style={{ marginTop: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Отзывы</h2>
-        {rq.isLoading ? <Spinner /> : null}
-        {rq.data?.reviews?.length ? (
-          <Stack variant="col">
-            {rq.data.reviews.map((r) => (
-              <div
-                key={r.id}
-                style={{
-                  padding: '1rem',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 4,
-                }}
+      <Panel title="Характеристики" className="mb-8">
+        <DescriptionList
+          items={[
+            { label: 'Код модели', value: model.model_code },
+            { label: 'Привод', value: model.drive_type },
+            { label: 'Годы производства', value: years },
+            {
+              label: 'Статус',
+              value: model.is_in_production ? 'В производстве' : 'Снята с производства',
+            },
+          ]}
+        />
+      </Panel>
+
+      <Panel title={`Отзывы${reviews.length ? ` (${reviews.length})` : ''}`}>
+        {reviewsQuery.isLoading ? <Skeleton className="h-24" /> : null}
+        {reviewsQuery.isSuccess && !reviews.length ? (
+          <EmptyState
+            icon="star"
+            title="Пока нет отзывов"
+            description="Станьте первым, кто оценит модель."
+          />
+        ) : null}
+        {reviews.length ? (
+          <ul className="m-0 list-none space-y-4 p-0">
+            {reviews.map((review) => (
+              <li
+                key={review.id}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-4"
               >
-                <strong>{'★'.repeat(r.rating)}</strong>
-                {r.title ? <p style={{ margin: '0.5rem 0 0' }}>{r.title}</p> : null}
-                {r.comment ? <p style={{ color: 'var(--color-text-muted)' }}>{r.comment}</p> : null}
-              </div>
+                <StarRating value={review.rating} />
+                {review.title ? (
+                  <p className="mt-2 mb-0 font-semibold text-[var(--color-text)]">{review.title}</p>
+                ) : null}
+                {review.comment ? <p className="mt-1 mb-0 text-sm">{review.comment}</p> : null}
+              </li>
             ))}
-          </Stack>
-        ) : (
-          <p style={{ color: 'var(--color-text-muted)' }}>Пока нет отзывов.</p>
-        )}
+          </ul>
+        ) : null}
 
         {canReview ? (
           <form
-            style={{ marginTop: '1.5rem', maxWidth: 400 }}
-            onSubmit={handleSubmit((v) => revMut.mutate(v))}
+            className="mt-8 max-w-md border-t border-[var(--color-border)] pt-6"
+            onSubmit={handleSubmit((values) => reviewMutation.mutate(values))}
+            noValidate
           >
-            <label
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.75rem',
-                textTransform: 'uppercase',
-              }}
+            <h3 className="mb-4 text-base">Оставить отзыв</h3>
+            <Select
+              id="review-rating"
+              label="Оценка"
+              error={errors.rating?.message}
+              {...register('rating')}
             >
-              Оценка 1–5
-              <input
-                type="number"
-                min={1}
-                max={5}
-                style={{ marginLeft: '0.5rem', width: 60 }}
-                {...register('rating')}
-              />
-            </label>
-            {errors.rating ? <p style={{ color: '#fca5a5' }}>{errors.rating.message}</p> : null}
-            <TextArea id="rev-title" label="Заголовок" {...register('title')} />
-            <TextArea id="rev-comment" label="Комментарий" {...register('comment')} />
-            {revMut.isError ? (
-              <p style={{ color: '#fca5a5' }}>{parseApiError(revMut.error).message}</p>
+              {[5, 4, 3, 2, 1].map((value) => (
+                <option key={value} value={value}>
+                  {value} из 5
+                </option>
+              ))}
+            </Select>
+            <Textarea id="review-title" label="Заголовок" rows={2} {...register('title')} />
+            <Textarea id="review-comment" label="Комментарий" {...register('comment')} />
+            {reviewMutation.isError ? (
+              <Alert variant="danger">{parseApiError(reviewMutation.error).message}</Alert>
             ) : null}
-            <Button type="submit" disabled={isSubmitting || revMut.isPending}>
+            <Button type="submit" loading={reviewMutation.isPending}>
               Отправить отзыв
             </Button>
           </form>
         ) : null}
-      </section>
+      </Panel>
     </div>
   )
 }

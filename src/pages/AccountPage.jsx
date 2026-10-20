@@ -6,30 +6,38 @@ import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { useCustomerRecord } from '@/features/customers/hooks/useCustomerRecord.js'
 import { patchCustomer } from '@/features/customers/customerService.js'
 import { QK } from '@/constants/queryKeys.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
-import { Input } from '@/shared/ui/Input.jsx'
-import { Spinner } from '@/shared/ui/Spinner.jsx'
+import { ROLE_LABELS } from '@/constants/catalog.js'
 import { USER_ROLES } from '@/constants/roles.js'
 import { parseApiError } from '@/services/api'
+import { Alert } from '@/shared/ui/Alert.jsx'
+import { Button } from '@/shared/ui/Button.jsx'
+import { DescriptionList } from '@/shared/ui/DescriptionList.jsx'
+import { Input } from '@/shared/ui/Input.jsx'
+import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { Panel } from '@/shared/ui/Panel.jsx'
+import { Spinner } from '@/shared/ui/Spinner.jsx'
 
-const dobSchema = z.object({
+const profileSchema = z.object({
   date_of_birth: z.string().optional(),
 })
 
 export function AccountPage() {
   const { api, user } = useAuth()
   const { data: customer, isLoading } = useCustomerRecord()
-  const qc = useQueryClient()
+  const queryClient = useQueryClient()
 
-  const { register, handleSubmit } = useForm({
-    resolver: zodResolver(dobSchema),
-    values: customer?.date_of_birth
-      ? { date_of_birth: String(customer.date_of_birth).slice(0, 10) }
-      : { date_of_birth: '' },
+  const {
+    register,
+    handleSubmit,
+    formState: { isDirty },
+  } = useForm({
+    resolver: zodResolver(profileSchema),
+    values: {
+      date_of_birth: customer?.date_of_birth ? String(customer.date_of_birth).slice(0, 10) : '',
+    },
   })
 
-  const mut = useMutation({
+  const mutation = useMutation({
     mutationFn: async (values) => {
       if (!customer) return
       await patchCustomer(api, customer.id, {
@@ -37,7 +45,7 @@ export function AccountPage() {
       })
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.customerByUser(user?.id) })
+      queryClient.invalidateQueries({ queryKey: QK.customerByUser(user?.id) })
     },
   })
 
@@ -46,41 +54,47 @@ export function AccountPage() {
   return (
     <div>
       <PageHeader kicker="Кабинет" title="Профиль" />
-      <dl style={{ fontSize: '0.95rem' }}>
-        <dt style={{ color: 'var(--color-text-muted)' }}>Имя</dt>
-        <dd style={{ margin: '0 0 0.75rem' }}>
-          {user.first_name} {user.second_name}
-        </dd>
-        <dt style={{ color: 'var(--color-text-muted)' }}>Email</dt>
-        <dd style={{ margin: '0 0 0.75rem' }}>{user.email}</dd>
-        <dt style={{ color: 'var(--color-text-muted)' }}>Роль</dt>
-        <dd style={{ margin: '0 0 0.75rem' }}>{user.role}</dd>
-      </dl>
+
+      <Panel title="Учётные данные" className="mb-6">
+        <DescriptionList
+          items={[
+            { label: 'Имя', value: `${user.first_name} ${user.second_name}` },
+            { label: 'Email', value: user.email },
+            { label: 'Телефон', value: user.phone_number },
+            { label: 'Роль', value: ROLE_LABELS[user.role] ?? user.role },
+          ]}
+        />
+      </Panel>
 
       {user.role === USER_ROLES.customer ? (
-        isLoading ? (
-          <Spinner />
-        ) : customer ? (
-          <form
-            style={{ maxWidth: 360, marginTop: '1.5rem' }}
-            onSubmit={handleSubmit((v) => mut.mutate(v))}
-          >
-            <Input
-              id="dob"
-              label="Дата рождения (YYYY-MM-DD)"
-              type="date"
-              {...register('date_of_birth')}
-            />
-            {mut.isError ? (
-              <p style={{ color: '#fca5a5' }}>{parseApiError(mut.error).message}</p>
-            ) : null}
-            <Button type="submit" disabled={mut.isPending}>
-              Сохранить
-            </Button>
-          </form>
-        ) : (
-          <p style={{ color: 'var(--color-text-muted)' }}>Профиль customer не найден.</p>
-        )
+        <Panel
+          title="Данные покупателя"
+          description="Эти сведения используются при оформлении заказов."
+        >
+          {isLoading ? <Spinner className="py-4" /> : null}
+          {!isLoading && !customer ? (
+            <Alert variant="warning">Профиль покупателя не найден. Обратитесь в поддержку.</Alert>
+          ) : null}
+          {customer ? (
+            <form className="max-w-sm" onSubmit={handleSubmit((values) => mutation.mutate(values))}>
+              <Input
+                id="date_of_birth"
+                label="Дата рождения"
+                type="date"
+                {...register('date_of_birth')}
+              />
+              {mutation.isError ? (
+                <Alert variant="danger">{parseApiError(mutation.error).message}</Alert>
+              ) : null}
+              {mutation.isSuccess && !isDirty ? (
+                <Alert variant="success">Изменения сохранены.</Alert>
+              ) : null}
+              <Button type="submit" loading={mutation.isPending} disabled={!isDirty}>
+                Сохранить
+              </Button>
+            </form>
+          ) : null}
+        </Panel>
       ) : null}
     </div>
   )

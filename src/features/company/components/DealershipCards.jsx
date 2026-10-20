@@ -1,66 +1,62 @@
 import { Link } from 'react-router-dom'
-import { Loader } from '@/shared/ui/Loader.jsx'
 import { useCompanyDealerships } from '@/features/company/hooks/useCompanyDealerships.js'
 import { ROUTES } from '@/constants/routes.js'
-import { useCompanyUiStore } from '@/features/company/store/companyUiStore.js'
-import clsx from 'clsx'
+import { parseApiError } from '@/services/api'
+import { Card, CardBody } from '@/shared/ui/Card.jsx'
+import { EmptyState } from '@/shared/ui/EmptyState.jsx'
+import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { Icon } from '@/shared/ui/Icon.jsx'
+import { Skeleton } from '@/shared/ui/Skeleton.jsx'
 
 export function DealershipCards() {
-  const { data, isPending, isError, error } = useCompanyDealerships()
-  const expandedId = useCompanyUiStore((s) => s.expandedId)
-  const setExpandedId = useCompanyUiStore((s) => s.setExpandedId)
+  const { data, isPending, isError, error, refetch } = useCompanyDealerships()
 
-  const list = data?.dealerships ?? []
-
-  if (isPending) return <Loader />
-
-  if (isError) {
+  if (isPending) {
     return (
-      <p className="text-sm text-red-600">
-        Не удалось загрузить дилерские центры: {String(error?.message ?? error)}
-      </p>
+      <div className="grid gap-4 sm:grid-cols-2" role="status" aria-label="Загрузка">
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+      </div>
     )
   }
 
+  if (isError) {
+    return (
+      <ErrorFallback
+        title="Не удалось загрузить дилерские центры"
+        message={parseApiError(error).message}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  const dealerships = data.dealerships.filter((dealership) => dealership.is_active !== false)
+  if (!dealerships.length) {
+    return <EmptyState icon="building" title="Список салонов пуст" />
+  }
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {list.map((d) => {
-        const open = expandedId === d.id
-        return (
-          <article
-            key={d.id}
-            className={clsx(
-              'overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900',
-              open && 'ring-2 ring-zinc-400 dark:ring-zinc-600'
-            )}
-          >
-            <div className="p-4">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{d.name}</h3>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{d.address}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="text-sm font-medium text-zinc-900 underline dark:text-zinc-100"
-                  onClick={() => setExpandedId(open ? null : d.id)}
-                >
-                  {open ? 'Свернуть' : 'Подробнее'}
-                </button>
+    <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2">
+      {dealerships.map((dealership) => (
+        <li key={dealership.id}>
+          <Card interactive className="group h-full">
+            <CardBody className="flex h-full flex-col gap-2 px-5 py-5">
+              <h3 className="mb-0 text-base font-semibold">
                 <Link
-                  to={ROUTES.dealershipDetail(d.id)}
-                  className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400"
+                  to={ROUTES.dealershipDetail(dealership.id)}
+                  className="text-[var(--color-text)] after:absolute after:inset-0 after:content-[''] hover:text-[var(--color-text)] focus-visible:outline-none"
                 >
-                  Страница салона
+                  {dealership.name}
                 </Link>
-              </div>
-              {open ? (
-                <p className="mt-3 text-xs text-zinc-500">
-                  is_active: {String(d.is_active)} · city_id: {d.city_id}
-                </p>
-              ) : null}
-            </div>
-          </article>
-        )
-      })}
-    </div>
+              </h3>
+              <p className="mb-0 flex items-start gap-2 text-sm">
+                <Icon name="mapPin" className="mt-0.5 h-4 w-4" />
+                {dealership.address}
+              </p>
+            </CardBody>
+          </Card>
+        </li>
+      ))}
+    </ul>
   )
 }

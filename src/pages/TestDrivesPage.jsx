@@ -1,12 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { useCustomerRecord } from '@/features/customers/hooks/useCustomerRecord.js'
 import {
-  fetchTestDrivesByCustomer,
   createTestDrive,
+  fetchTestDrivesByCustomer,
 } from '@/features/test-drives/testDriveService.js'
 import { testDrivesResponseSchema } from '@/features/test-drives/schemas.js'
 import { fetchVehicles } from '@/features/vehicles/vehicleService.js'
@@ -14,29 +14,33 @@ import { vehiclesResponseSchema } from '@/features/vehicles/schemas.js'
 import { fetchDealerships } from '@/features/dealerships/dealershipService.js'
 import { dealershipsResponseSchema } from '@/features/dealerships/schemas.js'
 import { QK } from '@/constants/queryKeys.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
-import { Select } from '@/shared/ui/Select.jsx'
-import { TextArea } from '@/shared/ui/Textarea.jsx'
-import { Input } from '@/shared/ui/Input.jsx'
-import { Spinner } from '@/shared/ui/Spinner.jsx'
-import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { parseApiError } from '@/services/api'
+import { formatDateTime } from '@/lib/format.js'
+import { Alert } from '@/shared/ui/Alert.jsx'
+import { Button } from '@/shared/ui/Button.jsx'
+import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { Input } from '@/shared/ui/Input.jsx'
+import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { Panel } from '@/shared/ui/Panel.jsx'
+import { Select } from '@/shared/ui/Select.jsx'
+import { Spinner } from '@/shared/ui/Spinner.jsx'
+import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
+import { Textarea } from '@/shared/ui/Textarea.jsx'
 
 const formSchema = z.object({
-  vehicle_id: z.string().uuid(),
-  dealership_id: z.coerce.number(),
-  requested_datetime: z.string().min(1),
+  vehicle_id: z.string().uuid('Выберите автомобиль'),
+  dealership_id: z.coerce.number().positive('Выберите салон'),
+  requested_datetime: z.string().min(1, 'Укажите дату и время'),
   notes: z.string().optional(),
 })
 
 export function TestDrivesPage() {
   const { api } = useAuth()
-  const { data: customer, isLoading: cl } = useCustomerRecord()
-  const qc = useQueryClient()
+  const { data: customer, isLoading: customerLoading } = useCustomerRecord()
+  const queryClient = useQueryClient()
 
-  const tq = useQuery({
+  const testDrivesQuery = useQuery({
     queryKey: ['test-drives', customer?.id],
     queryFn: async () => {
       const raw = await fetchTestDrivesByCustomer(api, customer.id)
@@ -45,7 +49,7 @@ export function TestDrivesPage() {
     enabled: !!customer?.id,
   })
 
-  const vq = useQuery({
+  const vehiclesQuery = useQuery({
     queryKey: QK.vehicles({ page: 1, list: 'td' }),
     queryFn: async () => {
       const raw = await fetchVehicles(api, { page: 1, limit: 50, is_active: true })
@@ -53,7 +57,7 @@ export function TestDrivesPage() {
     },
   })
 
-  const dq = useQuery({
+  const dealershipsQuery = useQuery({
     queryKey: QK.dealerships({ page: 1, td: 1 }),
     queryFn: async () => {
       const raw = await fetchDealerships(api, { page: 1, limit: 100 })
@@ -64,10 +68,11 @@ export function TestDrivesPage() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({ resolver: zodResolver(formSchema) })
 
-  const mut = useMutation({
+  const mutation = useMutation({
     mutationFn: async (values) => {
       await createTestDrive(api, {
         customer_id: customer.id,
@@ -77,48 +82,76 @@ export function TestDrivesPage() {
         notes: values.notes || null,
       })
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['test-drives'] }),
+    onSuccess: () => {
+      reset()
+      queryClient.invalidateQueries({ queryKey: ['test-drives'] })
+    },
   })
 
-  if (cl) return <Spinner />
-  if (!customer) return <EmptyState title="Нужен профиль покупателя" />
+  if (customerLoading) return <Spinner />
+  if (!customer) {
+    return (
+      <EmptyState
+        icon="gauge"
+        title="Нужен профиль покупателя"
+        description="Запись на тест-драйв доступна только покупателям."
+      />
+    )
+  }
 
-  if (tq.isLoading) return <Spinner />
-  if (tq.isError)
-    return <ErrorFallback message={parseApiError(tq.error).message} onRetry={() => tq.refetch()} />
+  if (testDrivesQuery.isLoading) return <Spinner />
+  if (testDrivesQuery.isError) {
+    return (
+      <ErrorFallback
+        message={parseApiError(testDrivesQuery.error).message}
+        onRetry={() => testDrivesQuery.refetch()}
+      />
+    )
+  }
+
+  const testDrives = testDrivesQuery.data.test_drives
+  const activeDealerships =
+    dealershipsQuery.data?.dealerships.filter((dealership) => dealership.is_active !== false) ?? []
 
   return (
     <div>
       <PageHeader kicker="Сервис" title="Тест-драйвы" />
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {tq.data.test_drives.map((td) => (
-          <li
-            key={td.id}
-            style={{
-              padding: '0.75rem',
-              marginBottom: '0.5rem',
-              border: '1px solid var(--color-border)',
-              borderRadius: 4,
-            }}
-          >
-            {td.status} · {new Date(td.requested_datetime).toLocaleString()}
-          </li>
-        ))}
-      </ul>
 
-      <section style={{ marginTop: '2rem', maxWidth: 440 }}>
-        <h2 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Новая заявка</h2>
-        <form onSubmit={handleSubmit((v) => mut.mutate(v))}>
+      {testDrives.length ? (
+        <ul className="m-0 mb-10 list-none space-y-3 p-0">
+          {testDrives.map((testDrive) => (
+            <li
+              key={testDrive.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-4 shadow-[var(--shadow-card)]"
+            >
+              <span className="font-medium text-[var(--color-text)]">
+                {formatDateTime(testDrive.requested_datetime)}
+              </span>
+              <StatusBadge status={testDrive.status} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          className="mb-10"
+          icon="gauge"
+          title="Заявок на тест-драйв пока нет"
+          description="Оставьте первую заявку в форме ниже."
+        />
+      )}
+
+      <Panel title="Новая заявка" className="max-w-xl">
+        <form onSubmit={handleSubmit((values) => mutation.mutate(values))} noValidate>
           <Select
             id="vehicle_id"
             label="Автомобиль"
             error={errors.vehicle_id?.message}
             {...register('vehicle_id')}
           >
-            <option value="">—</option>
-            {vq.data?.vehicles.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.model_name} · {v.production_year}
+            <option value="">Выберите автомобиль</option>
+            {vehiclesQuery.data?.vehicles.map((vehicle) => (
+              <option key={vehicle.id} value={vehicle.id}>
+                {vehicle.model_name} · {vehicle.production_year}
               </option>
             ))}
           </Select>
@@ -128,14 +161,12 @@ export function TestDrivesPage() {
             error={errors.dealership_id?.message}
             {...register('dealership_id')}
           >
-            <option value="">—</option>
-            {dq.data?.dealerships
-              .filter((d) => d.is_active !== false)
-              .map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
+            <option value="">Выберите салон</option>
+            {activeDealerships.map((dealership) => (
+              <option key={dealership.id} value={dealership.id}>
+                {dealership.name}
+              </option>
+            ))}
           </Select>
           <Input
             id="requested_datetime"
@@ -144,15 +175,16 @@ export function TestDrivesPage() {
             error={errors.requested_datetime?.message}
             {...register('requested_datetime')}
           />
-          <TextArea id="td-notes" label="Комментарий" {...register('notes')} />
-          {mut.isError ? (
-            <p style={{ color: '#fca5a5' }}>{parseApiError(mut.error).message}</p>
+          <Textarea id="td-notes" label="Комментарий" {...register('notes')} />
+          {mutation.isError ? (
+            <Alert variant="danger">{parseApiError(mutation.error).message}</Alert>
           ) : null}
-          <Button type="submit" disabled={mut.isPending}>
-            Отправить
+          {mutation.isSuccess ? <Alert variant="success">Заявка отправлена.</Alert> : null}
+          <Button type="submit" loading={mutation.isPending}>
+            Отправить заявку
           </Button>
         </form>
-      </section>
+      </Panel>
     </div>
   )
 }

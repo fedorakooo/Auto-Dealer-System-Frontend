@@ -1,16 +1,17 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { parseApiError } from '@/services/api'
-import { Button } from '@/shared/ui/Button.jsx'
-import { Input } from '@/shared/ui/Input.jsx'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
 import { ROUTES } from '@/constants/routes.js'
 import { SEED_EMPLOYEE_EMAILS } from '@/shared/config/seedEmployees.js'
 import { isDev } from '@/shared/config/env.js'
-import { useState } from 'react'
+import { Alert } from '@/shared/ui/Alert.jsx'
+import { AuthCard } from '@/shared/ui/AuthCard.jsx'
+import { Button } from '@/shared/ui/Button.jsx'
+import { Input, PasswordInput } from '@/shared/ui/Input.jsx'
 
 const schema = z.object({
   email: z.string().email('Некорректный email'),
@@ -24,6 +25,7 @@ export function LoginPage() {
   const [formError, setFormError] = useState('')
 
   const from = location.state?.from?.pathname || ROUTES.account
+  const justRegistered = Boolean(location.state?.registered)
 
   const {
     register,
@@ -36,18 +38,27 @@ export function LoginPage() {
     try {
       await login(values.email, values.password)
       navigate(from, { replace: true })
-    } catch (e) {
-      setFormError(parseApiError(e).message)
+    } catch (error) {
+      setFormError(parseApiError(error).message)
     }
   }
 
   return (
-    <div style={{ maxWidth: 420 }}>
-      <PageHeader
-        kicker="Вход"
-        title="Авторизация"
-        subtitle="Используйте email и пароль учётной записи."
-      />
+    <AuthCard
+      title="Вход в личный кабинет"
+      subtitle="Используйте email и пароль вашей учётной записи."
+      footer={
+        <>
+          Нет аккаунта?{' '}
+          <Link to={ROUTES.register} className="link">
+            Зарегистрироваться
+          </Link>
+        </>
+      }
+    >
+      {justRegistered ? (
+        <Alert variant="success">Аккаунт создан. Войдите, используя свои данные.</Alert>
+      ) : null}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Input
           id="email"
@@ -57,34 +68,25 @@ export function LoginPage() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <Input
+        <PasswordInput
           id="password"
           label="Пароль"
-          type="password"
           autoComplete="current-password"
           error={errors.password?.message}
           {...register('password')}
         />
-        {formError ? (
-          <p role="alert" style={{ color: '#fca5a5', marginBottom: '1rem' }}>
-            {formError}
-          </p>
-        ) : null}
-        <Button type="submit" fullWidth disabled={isSubmitting}>
+        {formError ? <Alert variant="danger">{formError}</Alert> : null}
+        <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
           {isSubmitting ? 'Вход…' : 'Войти'}
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', fontSize: '0.9rem' }}>
-        Нет аккаунта? <Link to={ROUTES.register}>Регистрация</Link>
-      </p>
       {isDev ? (
-        <p style={{ marginTop: '1.25rem', fontSize: '0.82rem', lineHeight: 1.45, opacity: 0.75 }}>
-          Локальная разработка: сотрудники создаются из{' '}
-          <code style={{ fontSize: '0.9em' }}>employees.yaml</code> при старте API; email:{' '}
-          {SEED_EMPLOYEE_EMAILS.join(', ')}; пароли — поле{' '}
-          <code style={{ fontSize: '0.9em' }}>password</code> в том же файле.
+        <p className="mt-6 mb-0 rounded-lg bg-[var(--color-surface-subtle)] p-3 text-xs leading-5">
+          Локальная разработка: сотрудники создаются из <code>employees.yaml</code> при старте API;
+          email: {SEED_EMPLOYEE_EMAILS.join(', ')}; пароли — поле <code>password</code> в том же
+          файле.
         </p>
       ) : null}
-    </div>
+    </AuthCard>
   )
 }

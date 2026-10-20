@@ -1,36 +1,52 @@
-import clsx from 'clsx'
-const variants = {
-  primary:
-    'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white',
-  secondary:
-    'border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
-  ghost: 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800',
-  danger: 'bg-red-600 text-white hover:bg-red-500',
-}
-const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
-}
+import { Link } from 'react-router-dom'
+import { Icon } from '@/shared/ui/Icon.jsx'
+import { buttonStyles } from '@/shared/ui/buttonStyles.js'
+
 export function Button({
   variant = 'primary',
   size = 'md',
   className,
   type = 'button',
   fullWidth,
+  loading = false,
+  disabled,
+  children,
   ...rest
 }) {
   return (
     <button
       type={type}
-      className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:pointer-events-none disabled:opacity-50',
-        fullWidth && 'w-full',
-        variants[variant],
-        sizes[size],
-        className
-      )}
+      className={buttonStyles({ variant, size, fullWidth, className })}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...rest}
-    />
+    >
+      {loading ? (
+        <span
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+      ) : null}
+      {children}
+    </button>
+  )
+}
+
+/** Router link styled as a button; avoids invalid `<a><button/></a>` nesting. */
+export function LinkButton({
+  to,
+  variant = 'primary',
+  size = 'md',
+  fullWidth,
+  className,
+  icon,
+  children,
+  ...rest
+}) {
+  return (
+    <Link to={to} className={buttonStyles({ variant, size, fullWidth, className })} {...rest}>
+      {children}
+      {icon ? <Icon name={icon} className="h-4 w-4" /> : null}
+    </Link>
   )
 }

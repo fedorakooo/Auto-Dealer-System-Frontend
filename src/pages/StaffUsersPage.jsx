@@ -2,49 +2,70 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { fetchUsers } from '@/features/users/userService.js'
 import { usersResponseSchema } from '@/features/users/schemas.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
-import { Spinner } from '@/shared/ui/Spinner.jsx'
-import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { ROLE_LABELS } from '@/constants/catalog.js'
+import { QK } from '@/constants/queryKeys.js'
 import { parseApiError } from '@/services/api'
+import { formatDate } from '@/lib/format.js'
+import { Badge } from '@/shared/ui/Badge.jsx'
+import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { Skeleton } from '@/shared/ui/Skeleton.jsx'
+import { DataTable } from '@/shared/ui/Table.jsx'
+
+const COLUMNS = [
+  {
+    key: 'name',
+    header: 'Имя',
+    render: (user) => `${user.first_name} ${user.second_name}`,
+  },
+  { key: 'email', header: 'Email' },
+  { key: 'role', header: 'Роль', render: (user) => ROLE_LABELS[user.role] ?? user.role },
+  {
+    key: 'is_active',
+    header: 'Статус',
+    render: (user) => (
+      <Badge tone={user.is_active ? 'success' : 'neutral'}>
+        {user.is_active ? 'Активен' : 'Отключён'}
+      </Badge>
+    ),
+  },
+  { key: 'created_at', header: 'Создан', render: (user) => formatDate(user.created_at) },
+]
 
 export function StaffUsersPage() {
   const { api } = useAuth()
 
-  const q = useQuery({
-    queryKey: ['users', { page: 1 }],
+  const query = useQuery({
+    queryKey: QK.users({ page: 1 }),
     queryFn: async () => {
       const raw = await fetchUsers(api, { page: 1, limit: 50 })
       return usersResponseSchema.parse(raw)
     },
   })
 
-  if (q.isLoading) return <Spinner />
-  if (q.isError)
-    return <ErrorFallback message={parseApiError(q.error).message} onRetry={() => q.refetch()} />
-
   return (
     <div>
-      <PageHeader kicker="Администрирование" title="Пользователи" />
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-              <th style={{ padding: '0.5rem' }}>Email</th>
-              <th style={{ padding: '0.5rem' }}>Роль</th>
-              <th style={{ padding: '0.5rem' }}>Активен</th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.data.users.map((u) => (
-              <tr key={u.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <td style={{ padding: '0.5rem' }}>{u.email}</td>
-                <td style={{ padding: '0.5rem' }}>{u.role}</td>
-                <td style={{ padding: '0.5rem' }}>{u.is_active ? 'да' : 'нет'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PageHeader
+        kicker="Администрирование"
+        title="Пользователи"
+        subtitle={query.isSuccess ? `Всего учётных записей: ${query.data.total}` : undefined}
+      />
+      {query.isLoading ? <Skeleton className="h-64" /> : null}
+      {query.isError ? (
+        <ErrorFallback
+          message={parseApiError(query.error).message}
+          onRetry={() => query.refetch()}
+        />
+      ) : null}
+      {query.isSuccess ? (
+        <DataTable
+          caption="Пользователи системы"
+          columns={COLUMNS}
+          rows={query.data.users}
+          getRowKey={(user) => user.id}
+          emptyMessage="Пользователей пока нет"
+        />
+      ) : null}
     </div>
   )
 }
