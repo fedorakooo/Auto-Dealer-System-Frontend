@@ -3,47 +3,59 @@ import { RootProviders } from '@/app/RootProviders.jsx'
 import { LandingLayout } from '@/layouts/LandingLayout.jsx'
 import { MainLayout } from '@/layouts/MainLayout.jsx'
 import { ContentLayout } from '@/layouts/ContentLayout.jsx'
+import { AccountLayout } from '@/layouts/AccountLayout.jsx'
+import { StaffLayout } from '@/layouts/StaffLayout.jsx'
 import { ProtectedRoute } from '@/components/routing/ProtectedRoute.jsx'
 import { StaffRoute } from '@/components/routing/StaffRoute.jsx'
 import { FeatureErrorBoundary } from '@/components/routing/FeatureErrorBoundary.jsx'
 import { RouteErrorFallback } from '@/app/RouteErrorFallback.jsx'
 import { lazyNamed } from '@/app/lazyRoute.js'
 
-const HomePage = lazyNamed(() => import('@/pages/HomePage.jsx'), 'HomePage')
-const LoginPage = lazyNamed(() => import('@/pages/LoginPage.jsx'), 'LoginPage')
-const RegisterPage = lazyNamed(() => import('@/pages/RegisterPage.jsx'), 'RegisterPage')
-const VehiclesPage = lazyNamed(() => import('@/pages/VehiclesPage.jsx'), 'VehiclesPage')
-const VehicleDetailPage = lazyNamed(
-  () => import('@/pages/VehicleDetailPage.jsx'),
-  'VehicleDetailPage'
-)
-const ModelsPage = lazyNamed(() => import('@/pages/ModelsPage.jsx'), 'ModelsPage')
-const ModelDetailPage = lazyNamed(() => import('@/pages/ModelDetailPage.jsx'), 'ModelDetailPage')
-const DealershipsPage = lazyNamed(() => import('@/pages/DealershipsPage.jsx'), 'DealershipsPage')
-const DealershipDetailPage = lazyNamed(
-  () => import('@/pages/DealershipDetailPage.jsx'),
-  'DealershipDetailPage'
-)
-const AccountLayout = lazyNamed(() => import('@/pages/AccountLayout.jsx'), 'AccountLayout')
-const AccountPage = lazyNamed(() => import('@/pages/AccountPage.jsx'), 'AccountPage')
-const OrdersPage = lazyNamed(() => import('@/pages/OrdersPage.jsx'), 'OrdersPage')
-const FavoritesPage = lazyNamed(() => import('@/pages/FavoritesPage.jsx'), 'FavoritesPage')
-const TestDrivesPage = lazyNamed(() => import('@/pages/TestDrivesPage.jsx'), 'TestDrivesPage')
-const CustomOrdersPage = lazyNamed(() => import('@/pages/CustomOrdersPage.jsx'), 'CustomOrdersPage')
-const StaffUsersPage = lazyNamed(() => import('@/pages/StaffUsersPage.jsx'), 'StaffUsersPage')
-const StaffOrdersPage = lazyNamed(() => import('@/pages/StaffOrdersPage.jsx'), 'StaffOrdersPage')
-const LogsPage = lazyNamed(() => import('@/pages/LogsPage.jsx'), 'LogsPage')
-const ForbiddenPage = lazyNamed(() => import('@/pages/ForbiddenPage.jsx'), 'ForbiddenPage')
-const NotFoundPage = lazyNamed(() => import('@/pages/NotFoundPage.jsx'), 'NotFoundPage')
-const CompanyPage = lazyNamed(() => import('@/pages/CompanyPage.jsx'), 'CompanyPage')
-const ServiceAppointmentsPage = lazyNamed(() => import('@/pages/ServiceAppointmentsPage.jsx'), 'ServiceAppointmentsPage')
-const AddressesPage = lazyNamed(() => import('@/pages/AddressesPage.jsx'), 'AddressesPage')
-const StaffDashboardPage = lazyNamed(() => import('@/pages/StaffDashboardPage.jsx'), 'StaffDashboardPage')
-const StaffOperationsPage = lazyNamed(() => import('@/pages/StaffOperationsPage.jsx'), 'StaffOperationsPage')
-const StaffInventoryPage = lazyNamed(() => import('@/pages/StaffInventoryPage.jsx'), 'StaffInventoryPage')
+const page = (name, loader) => lazyNamed(loader, name)
 
-function wrap(page) {
-  return <FeatureErrorBoundary>{page}</FeatureErrorBoundary>
+const HomePage = page('HomePage', () => import('@/pages/HomePage.jsx'))
+const LoginPage = page('LoginPage', () => import('@/pages/LoginPage.jsx'))
+const RegisterPage = page('RegisterPage', () => import('@/pages/RegisterPage.jsx'))
+const VehiclesPage = page('VehiclesPage', () => import('@/pages/VehiclesPage.jsx'))
+const VehicleDetailPage = page('VehicleDetailPage', () => import('@/pages/VehicleDetailPage.jsx'))
+const ModelsPage = page('ModelsPage', () => import('@/pages/ModelsPage.jsx'))
+const ModelDetailPage = page('ModelDetailPage', () => import('@/pages/ModelDetailPage.jsx'))
+const DealershipsPage = page('DealershipsPage', () => import('@/pages/DealershipsPage.jsx'))
+const DealershipDetailPage = page(
+  'DealershipDetailPage',
+  () => import('@/pages/DealershipDetailPage.jsx')
+)
+const CompanyPage = page('CompanyPage', () => import('@/pages/CompanyPage.jsx'))
+const AccountPage = page('AccountPage', () => import('@/pages/AccountPage.jsx'))
+const OrdersPage = page('OrdersPage', () => import('@/pages/OrdersPage.jsx'))
+const FavoritesPage = page('FavoritesPage', () => import('@/pages/FavoritesPage.jsx'))
+const TestDrivesPage = page('TestDrivesPage', () => import('@/pages/TestDrivesPage.jsx'))
+const CustomOrdersPage = page('CustomOrdersPage', () => import('@/pages/CustomOrdersPage.jsx'))
+const ServiceAppointmentsPage = page(
+  'ServiceAppointmentsPage',
+  () => import('@/pages/ServiceAppointmentsPage.jsx')
+)
+const AddressesPage = page('AddressesPage', () => import('@/pages/AddressesPage.jsx'))
+const StaffDashboardPage = page(
+  'StaffDashboardPage',
+  () => import('@/pages/StaffDashboardPage.jsx')
+)
+const StaffUsersPage = page('StaffUsersPage', () => import('@/pages/StaffUsersPage.jsx'))
+const StaffOrdersPage = page('StaffOrdersPage', () => import('@/pages/StaffOrdersPage.jsx'))
+const StaffOperationsPage = page(
+  'StaffOperationsPage',
+  () => import('@/pages/StaffOperationsPage.jsx')
+)
+const StaffInventoryPage = page(
+  'StaffInventoryPage',
+  () => import('@/pages/StaffInventoryPage.jsx')
+)
+const LogsPage = page('LogsPage', () => import('@/pages/LogsPage.jsx'))
+const ForbiddenPage = page('ForbiddenPage', () => import('@/pages/ForbiddenPage.jsx'))
+const NotFoundPage = page('NotFoundPage', () => import('@/pages/NotFoundPage.jsx'))
+
+function wrap(element) {
+  return <FeatureErrorBoundary>{element}</FeatureErrorBoundary>
 }
 
 export const router = createBrowserRouter([
@@ -71,7 +83,6 @@ export const router = createBrowserRouter([
             element: <ContentLayout />,
             children: [{ index: true, element: wrap(<CompanyPage />) }],
           },
-
           {
             path: 'account',
             element: <ProtectedRoute />,
@@ -90,44 +101,28 @@ export const router = createBrowserRouter([
               },
             ],
           },
-
           {
             path: 'staff',
-            element: <ProtectedRoute><StaffRoute>{wrap(<StaffDashboardPage />)}</StaffRoute></ProtectedRoute>,
+            element: <ProtectedRoute />,
+            children: [
+              {
+                element: <StaffRoute />,
+                children: [
+                  {
+                    element: <StaffLayout />,
+                    children: [
+                      { index: true, element: wrap(<StaffDashboardPage />) },
+                      { path: 'users', element: wrap(<StaffUsersPage />) },
+                      { path: 'orders', element: wrap(<StaffOrdersPage />) },
+                      { path: 'operations', element: wrap(<StaffOperationsPage />) },
+                      { path: 'inventory', element: wrap(<StaffInventoryPage />) },
+                      { path: 'logs', element: wrap(<LogsPage />) },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
-          {
-            path: 'staff/users',
-            element: (
-              <ProtectedRoute>
-                <StaffRoute>{wrap(<StaffUsersPage />)}</StaffRoute>
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'staff/operations',
-            element: <ProtectedRoute><StaffRoute>{wrap(<StaffOperationsPage />)}</StaffRoute></ProtectedRoute>,
-          },
-          {
-            path: 'staff/inventory',
-            element: <ProtectedRoute><StaffRoute>{wrap(<StaffInventoryPage />)}</StaffRoute></ProtectedRoute>,
-          },
-          {
-            path: 'staff/orders',
-            element: (
-              <ProtectedRoute>
-                <StaffRoute>{wrap(<StaffOrdersPage />)}</StaffRoute>
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'staff/logs',
-            element: (
-              <ProtectedRoute>
-                <StaffRoute>{wrap(<LogsPage />)}</StaffRoute>
-              </ProtectedRoute>
-            ),
-          },
-
           { path: 'forbidden', element: wrap(<ForbiddenPage />) },
           { path: '*', element: wrap(<NotFoundPage />) },
         ],
