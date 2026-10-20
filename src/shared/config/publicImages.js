@@ -3,7 +3,7 @@ export const PUBLIC_IMAGES = {
   heroPromo2: '/images/home-hero-promo-2.jpg',
   heroPromo3: '/images/home-hero-promo-3.jpg',
   tileStock: '/images/home-tile-stock.jpg',
-  tileTestdrive: '/images/home-tile-testdrive.jpg',
+  tileTestdrive: '/images/home-hero-promo-3.jpg',
   tileDealers: '/images/home-tile-dealers.jpg',
   serviceMaintenance: '/images/home-service-maintenance.jpg',
   serviceBooking: '/images/home-service-booking.jpg',
