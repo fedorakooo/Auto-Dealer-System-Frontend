@@ -1,0 +1,43 @@
+/** Shared UI: buttons, generic states, pagination, dialogs, errors, language switcher (agent: shell). */
+export default {
+  language: { label: 'Язык интерфейса', ru: 'Русский', en: 'English' },
+  loading: 'Загрузка',
+  loadingEllipsis: 'Загрузка…',
+  noData: 'Нет данных',
+  breadcrumbs: 'Навигационная цепочка',
+  rating: 'Оценка {value} из {max}',
+  actions: {
+    close: 'Закрыть',
+    confirm: 'Подтвердить',
+    cancel: 'Отмена',
+    retry: 'Повторить',
+    toHome: 'На главную',
+  },
+  dialog: { close: 'Закрыть диалог' },
+  toast: { close: 'Закрыть уведомление' },
+  password: { show: 'Показать пароль', hide: 'Скрыть пароль' },
+  gallery: { noPhoto: 'Фото отсутствует', showPhoto: 'Показать фото {index} из {total}' },
+  pagination: {
+    label: 'Постраничная навигация',
+    prev: 'Назад',
+    next: 'Вперёд',
+    page: 'Страница',
+    of: 'из {total}',
+  },
+  statusPage: { vehiclesCatalog: 'Каталог автомобилей' },
+  errors: {
+    somethingWentWrong: 'Что-то пошло не так',
+    routeError: 'Ошибка маршрута',
+    sectionError: 'Ошибка в разделе',
+    invalidResponse: 'Сервер вернул данные в неожиданном формате. Попробуйте позже.',
+  },
+  sort: { price: 'Цена', productionYear: 'Год выпуска' },
+  roles: { customer: 'Покупатель', employee: 'Сотрудник', admin: 'Администратор' },
+  filters: {
+    model: 'Модель',
+    bodyType: 'Кузов',
+    fuelType: 'Топливо',
+    transmissionType: 'Трансмиссия',
+    sortBy: 'Сортировка',
+  },
+}

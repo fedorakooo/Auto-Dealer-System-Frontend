@@ -1,0 +1,43 @@
+/** Shared UI: buttons, generic states, pagination, dialogs, errors, language switcher (agent: shell). */
+export default {
+  language: { label: 'Interface language', ru: 'Русский', en: 'English' },
+  loading: 'Loading',
+  loadingEllipsis: 'Loading…',
+  noData: 'No data',
+  breadcrumbs: 'Breadcrumb',
+  rating: 'Rated {value} out of {max}',
+  actions: {
+    close: 'Close',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    retry: 'Try again',
+    toHome: 'Go to home page',
+  },
+  dialog: { close: 'Close dialog' },
+  toast: { close: 'Dismiss notification' },
+  password: { show: 'Show password', hide: 'Hide password' },
+  gallery: { noPhoto: 'No photo available', showPhoto: 'Show photo {index} of {total}' },
+  pagination: {
+    label: 'Pagination',
+    prev: 'Previous',
+    next: 'Next',
+    page: 'Page',
+    of: 'of {total}',
+  },
+  statusPage: { vehiclesCatalog: 'Browse vehicles' },
+  errors: {
+    somethingWentWrong: 'Something went wrong',
+    routeError: 'Page error',
+    sectionError: 'This section failed to load',
+    invalidResponse: 'The server returned data in an unexpected format. Please try again later.',
+  },
+  sort: { price: 'Price', productionYear: 'Model year' },
+  roles: { customer: 'Customer', employee: 'Employee', admin: 'Administrator' },
+  filters: {
+    model: 'Model',
+    bodyType: 'Body',
+    fuelType: 'Fuel',
+    transmissionType: 'Transmission',
+    sortBy: 'Sort',
+  },
+}
