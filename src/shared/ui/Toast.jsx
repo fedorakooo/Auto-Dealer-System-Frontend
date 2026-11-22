@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import clsx from 'clsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const VARIANTS = {
   info: { box: 'bg-slate-900 text-white', icon: 'info' },
@@ -35,7 +36,7 @@ export function Toast({ open, onClose, children, variant = 'info' }) {
         <button
           type="button"
           className="-m-1 shrink-0 rounded p-1 opacity-80 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-          aria-label="Закрыть уведомление"
+          aria-label={t('common.toast.close')}
           onClick={onClose}
         >
           <Icon name="close" className="h-4 w-4" />

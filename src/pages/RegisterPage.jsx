@@ -11,13 +11,14 @@ import { Alert } from '@/shared/ui/Alert.jsx'
 import { AuthCard } from '@/shared/ui/AuthCard.jsx'
 import { Button } from '@/shared/ui/Button.jsx'
 import { Input, PasswordInput } from '@/shared/ui/Input.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const schema = z.object({
-  first_name: z.string().min(1, 'Обязательно'),
-  second_name: z.string().min(1, 'Обязательно'),
-  phone_number: z.string().min(5, 'Укажите телефон'),
-  email: z.string().email('Некорректный email'),
-  password: z.string().min(6, 'Минимум 6 символов'),
+  first_name: z.string().min(1, { error: () => t('auth.validation.required') }),
+  second_name: z.string().min(1, { error: () => t('auth.validation.required') }),
+  phone_number: z.string().min(5, { error: () => t('auth.validation.phone') }),
+  email: z.string().email({ error: () => t('auth.validation.email') }),
+  password: z.string().min(6, { error: () => t('auth.validation.passwordMin') }),
 })
 
 export function RegisterPage() {
@@ -43,13 +44,13 @@ export function RegisterPage() {
 
   return (
     <AuthCard
-      title="Создать аккаунт"
-      subtitle="Регистрация покупателя занимает меньше минуты."
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.subtitle')}
       footer={
         <>
-          Уже есть аккаунт?{' '}
+          {t('auth.register.haveAccount')}{' '}
           <Link to={ROUTES.login} className="link">
-            Войти
+            {t('auth.register.loginLink')}
           </Link>
         </>
       }
@@ -58,14 +59,14 @@ export function RegisterPage() {
         <div className="grid gap-x-4 sm:grid-cols-2">
           <Input
             id="first_name"
-            label="Имя"
+            label={t('auth.register.firstName')}
             autoComplete="given-name"
             error={errors.first_name?.message}
             {...register('first_name')}
           />
           <Input
             id="second_name"
-            label="Фамилия"
+            label={t('auth.register.lastName')}
             autoComplete="family-name"
             error={errors.second_name?.message}
             {...register('second_name')}
@@ -73,7 +74,7 @@ export function RegisterPage() {
         </div>
         <Input
           id="phone_number"
-          label="Телефон"
+          label={t('auth.register.phone')}
           type="tel"
           autoComplete="tel"
           error={errors.phone_number?.message}
@@ -89,15 +90,15 @@ export function RegisterPage() {
         />
         <PasswordInput
           id="password"
-          label="Пароль"
+          label={t('auth.password')}
           autoComplete="new-password"
-          hint="Минимум 6 символов"
+          hint={t('auth.validation.passwordMin')}
           error={errors.password?.message}
           {...register('password')}
         />
         {formError ? <Alert variant="danger">{formError}</Alert> : null}
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-          {isSubmitting ? 'Отправка…' : 'Зарегистрироваться'}
+          {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
         </Button>
       </form>
     </AuthCard>

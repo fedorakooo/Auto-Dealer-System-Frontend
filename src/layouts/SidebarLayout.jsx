@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import clsx from 'clsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const itemClass = ({ isActive }) =>
   clsx(
@@ -25,7 +26,7 @@ export function SidebarLayout({ title, items }) {
           {items.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={itemClass}>
               <Icon name={item.icon} className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </nav>

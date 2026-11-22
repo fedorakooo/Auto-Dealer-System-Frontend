@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const MAX_STARS = 5
 
@@ -9,7 +10,7 @@ export function StarRating({ value, className }) {
   return (
     <span
       role="img"
-      aria-label={`Оценка ${rounded} из ${MAX_STARS}`}
+      aria-label={t('common.rating', { value: rounded, max: MAX_STARS })}
       className={clsx('inline-flex gap-0.5', className)}
     >
       {Array.from({ length: MAX_STARS }, (_, index) => (

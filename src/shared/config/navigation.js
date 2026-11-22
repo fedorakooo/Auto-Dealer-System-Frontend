@@ -1,28 +1,51 @@
 import { ROUTES } from '@/constants/routes.js'
 
+/** Navigation entries keep translation keys (`labelKey`); labels are translated at render time. */
 export const PUBLIC_NAV = [
-  { to: ROUTES.vehicles, label: 'Автомобили' },
-  { to: ROUTES.models, label: 'Модели' },
-  { to: ROUTES.dealerships, label: 'Салоны' },
-  { to: ROUTES.company, label: 'Компания' },
+  { to: ROUTES.models, labelKey: 'layout.nav.models' },
+  { to: ROUTES.vehicles, labelKey: 'layout.nav.vehicles' },
+  { to: ROUTES.dealerships, labelKey: 'layout.nav.dealerships' },
+  { to: ROUTES.company, labelKey: 'layout.nav.company' },
 ]
 
 export const ACCOUNT_NAV = [
-  { to: ROUTES.account, label: 'Профиль', icon: 'user', end: true },
-  { to: ROUTES.orders, label: 'Заказы', icon: 'receipt' },
-  { to: ROUTES.favorites, label: 'Избранное', icon: 'heart' },
-  { to: ROUTES.testDrives, label: 'Тест-драйвы', icon: 'gauge' },
-  { to: ROUTES.customOrders, label: 'Индивидуальный заказ', icon: 'key' },
-  { to: ROUTES.service, label: 'Сервисные записи', icon: 'wrench' },
-  { to: ROUTES.addresses, label: 'Адреса', icon: 'mapPin' },
+  { to: ROUTES.account, labelKey: 'layout.accountNav.profile', icon: 'user', end: true },
+  { to: ROUTES.orders, labelKey: 'layout.accountNav.orders', icon: 'receipt' },
+  {
+    to: ROUTES.favorites,
+    labelKey: 'layout.accountNav.favorites',
+    icon: 'heart',
+    feature: 'favorites',
+  },
+  {
+    to: ROUTES.testDrives,
+    labelKey: 'layout.accountNav.testDrives',
+    icon: 'gauge',
+    feature: 'test_drives',
+  },
+  {
+    to: ROUTES.customOrders,
+    labelKey: 'layout.accountNav.customOrders',
+    icon: 'key',
+    feature: 'custom_orders',
+  },
+  {
+    to: ROUTES.service,
+    labelKey: 'layout.accountNav.service',
+    icon: 'wrench',
+    feature: 'service_appointments',
+  },
+  { to: ROUTES.addresses, labelKey: 'layout.accountNav.addresses', icon: 'mapPin' },
 ]
 
 export const STAFF_NAV = [
-  { to: ROUTES.staffDashboard, label: 'Обзор', icon: 'gauge', end: true },
-  { to: ROUTES.staffOrders, label: 'Заказы', icon: 'receipt' },
-  { to: ROUTES.staffOperations, label: 'Операции и сервис', icon: 'wrench' },
-  { to: ROUTES.staffInventory, label: 'Склад', icon: 'box' },
-  { to: ROUTES.staffMedia, label: 'Фотографии', icon: 'car' },
-  { to: ROUTES.staffUsers, label: 'Пользователи', icon: 'users' },
-  { to: ROUTES.logs, label: 'Логи и отчёты', icon: 'clipboard' },
+  { to: ROUTES.staffDashboard, labelKey: 'layout.staffNav.dashboard', icon: 'gauge', end: true },
+  { to: ROUTES.staffOrders, labelKey: 'layout.staffNav.orders', icon: 'receipt' },
+  { to: ROUTES.staffCatalog, labelKey: 'layout.staffNav.catalog', icon: 'car' },
+  { to: ROUTES.staffOperations, labelKey: 'layout.staffNav.operations', icon: 'wrench' },
+  { to: ROUTES.staffInventory, labelKey: 'layout.staffNav.inventory', icon: 'box' },
+  { to: ROUTES.staffMedia, labelKey: 'layout.staffNav.media', icon: 'car' },
+  { to: ROUTES.staffDealerships, labelKey: 'layout.staffNav.dealerships', icon: 'building' },
+  { to: ROUTES.staffUsers, labelKey: 'layout.staffNav.users', icon: 'users' },
+  { to: ROUTES.logs, labelKey: 'layout.staffNav.logs', icon: 'clipboard' },
 ]

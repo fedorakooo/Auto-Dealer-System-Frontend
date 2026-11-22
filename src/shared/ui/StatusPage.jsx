@@ -1,5 +1,6 @@
 import { LinkButton } from '@/shared/ui/Button.jsx'
 import { ROUTES } from '@/constants/routes.js'
+import { t } from '@/shared/i18n/index.js'
 
 /** Full-width message page for 403 / 404 style states. */
 export function StatusPage({ code, title, description }) {
@@ -15,10 +16,10 @@ export function StatusPage({ code, title, description }) {
       <p className="mb-8 max-w-md">{description}</p>
       <div className="flex flex-wrap justify-center gap-3">
         <LinkButton to={ROUTES.home} icon="arrowRight">
-          На главную
+          {t('common.actions.toHome')}
         </LinkButton>
         <LinkButton to={ROUTES.vehicles} variant="secondary">
-          Каталог автомобилей
+          {t('common.statusPage.vehiclesCatalog')}
         </LinkButton>
       </div>
     </div>

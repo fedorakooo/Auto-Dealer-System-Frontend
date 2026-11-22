@@ -6,6 +6,7 @@ export const orderResponseSchema = z.object({
   id: z.string().uuid(),
   customer_id: z.string().uuid(),
   vehicle_id: z.string().uuid(),
+  model_id: z.string().uuid().nullable().optional(),
   dealership_id: z.number(),
   status: z.string(),
   final_price: decimalLike,

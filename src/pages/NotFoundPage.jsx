@@ -1,11 +1,12 @@
 import { StatusPage } from '@/shared/ui/StatusPage.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 export function NotFoundPage() {
   return (
     <StatusPage
       code="404"
-      title="Страница не найдена"
-      description="Возможно, адрес введён с ошибкой или страница была перемещена."
+      title={t('auth.notFound.title')}
+      description={t('auth.notFound.description')}
     />
   )
 }

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { t } from '@/shared/i18n/index.js'
 
 export function Skeleton({ className }) {
   return (
@@ -11,7 +12,11 @@ export function Skeleton({ className }) {
 
 export function CardGridSkeleton({ count = 6 }) {
   return (
-    <div role="status" aria-label="Загрузка" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      role="status"
+      aria-label={t('common.loading')}
+      className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+    >
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
@@ -25,7 +30,7 @@ export function CardGridSkeleton({ count = 6 }) {
           </div>
         </div>
       ))}
-      <span className="sr-only">Загрузка…</span>
+      <span className="sr-only">{t('common.loadingEllipsis')}</span>
     </div>
   )
 }

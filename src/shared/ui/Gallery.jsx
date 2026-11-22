@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 /** Main image with a thumbnail strip. `photos` is a list of resolved URLs. */
 export function Gallery({ photos, alt, className }) {
@@ -15,7 +16,7 @@ export function Gallery({ photos, alt, className }) {
           className
         )}
         role="img"
-        aria-label="Фото отсутствует"
+        aria-label={t('common.gallery.noPhoto')}
       >
         <Icon name="car" className="h-24 w-24" />
       </div>
@@ -34,7 +35,10 @@ export function Gallery({ photos, alt, className }) {
               <button
                 type="button"
                 onClick={() => setSelected(index)}
-                aria-label={`Показать фото ${index + 1} из ${photos.length}`}
+                aria-label={t('common.gallery.showPhoto', {
+                  index: index + 1,
+                  total: photos.length,
+                })}
                 aria-current={index === active}
                 className={clsx(
                   'block w-full overflow-hidden rounded-lg border-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]',

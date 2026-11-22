@@ -3,18 +3,26 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { fetchOperationList } from '@/features/operations/operationsService.js'
 import { ROUTES } from '@/constants/routes.js'
+import { endpoints } from '@/services/api/endpoints.js'
+import { QK } from '@/constants/queryKeys.js'
+import { t } from '@/shared/i18n/index.js'
 import { Icon } from '@/shared/ui/Icon.jsx'
 import { PageHeader } from '@/shared/ui/PageHeader.jsx'
 import { Panel } from '@/shared/ui/Panel.jsx'
 import { Skeleton } from '@/shared/ui/Skeleton.jsx'
 
 const SOURCES = [
-  { label: 'Автомобили', path: '/vehicles', route: ROUTES.vehicles, icon: 'car' },
-  { label: 'Заказы', path: '/orders', route: ROUTES.staffOrders, icon: 'receipt' },
-  { label: 'Тест-драйвы', path: '/test-drives', route: ROUTES.staffOperations, icon: 'gauge' },
+  { labelKey: 'vehicles', path: endpoints.vehicles, route: ROUTES.staffCatalog, icon: 'car' },
+  { labelKey: 'orders', path: endpoints.orders, route: ROUTES.staffOrders, icon: 'receipt' },
   {
-    label: 'Сервисные заявки',
-    path: '/service/appointments',
+    labelKey: 'testDrives',
+    path: endpoints.testDrives,
+    route: ROUTES.staffOperations,
+    icon: 'gauge',
+  },
+  {
+    labelKey: 'appointments',
+    path: endpoints.serviceAppointments,
     route: ROUTES.staffOperations,
     icon: 'wrench',
   },
@@ -24,20 +32,17 @@ const SHORTCUTS = [
   {
     to: ROUTES.staffOperations,
     icon: 'wrench',
-    title: 'Операции, сервис и платежи',
-    text: 'Регистрация платежей, статусы автомобилей и сервисных заявок.',
+    key: 'operations',
   },
   {
     to: ROUTES.staffInventory,
     icon: 'box',
-    title: 'Склад и резервирование',
-    text: 'Остатки запчастей по салонам и резервирование позиций.',
+    key: 'inventory',
   },
   {
     to: ROUTES.staffUsers,
     icon: 'users',
-    title: 'Пользователи и сотрудники',
-    text: 'Список учётных записей и их ролей.',
+    key: 'users',
   },
 ]
 
@@ -50,7 +55,7 @@ export function StaffDashboardPage() {
   const { api } = useAuth()
   const queries = useQueries({
     queries: SOURCES.map((source) => ({
-      queryKey: ['staff-count', source.path],
+      queryKey: QK.staffCount(source.path),
       queryFn: () => fetchOperationList(api, source.path, { limit: 1 }),
     })),
   })
@@ -58,9 +63,9 @@ export function StaffDashboardPage() {
   return (
     <div>
       <PageHeader
-        kicker="Операционный центр"
-        title="Обзор дилерской сети"
-        subtitle="Сводка доступных сущностей; сервер остаётся источником прав и итоговых данных."
+        kicker={t('staff.dashboard.kicker')}
+        title={t('staff.dashboard.title')}
+        subtitle={t('staff.dashboard.subtitle')}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -74,7 +79,7 @@ export function StaffDashboardPage() {
             >
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm font-medium text-[var(--color-text-muted)]">
-                  {source.label}
+                  {t(`staff.dashboard.sources.${source.labelKey}`)}
                 </span>
                 <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--color-surface-subtle)] text-[var(--color-primary)] transition-colors group-hover:bg-[var(--color-primary)] group-hover:text-white">
                   <Icon name={source.icon} className="h-5 w-5" />
@@ -92,7 +97,7 @@ export function StaffDashboardPage() {
         })}
       </div>
 
-      <Panel title="Рабочие разделы" className="mt-8">
+      <Panel title={t('staff.dashboard.shortcutsTitle')} className="mt-8">
         <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-3">
           {SHORTCUTS.map((shortcut) => (
             <li key={shortcut.to}>
@@ -103,10 +108,10 @@ export function StaffDashboardPage() {
                 <Icon name={shortcut.icon} className="mt-0.5 text-[var(--color-accent)]" />
                 <span>
                   <span className="block font-semibold text-[var(--color-text)]">
-                    {shortcut.title}
+                    {t(`staff.dashboard.shortcuts.${shortcut.key}.title`)}
                   </span>
                   <span className="mt-1 block text-sm text-[var(--color-text-muted)]">
-                    {shortcut.text}
+                    {t(`staff.dashboard.shortcuts.${shortcut.key}.text`)}
                   </span>
                 </span>
               </Link>

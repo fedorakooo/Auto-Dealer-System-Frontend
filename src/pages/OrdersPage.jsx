@@ -13,6 +13,7 @@ import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
 import { PageHeader } from '@/shared/ui/PageHeader.jsx'
 import { Spinner } from '@/shared/ui/Spinner.jsx'
 import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 export function OrdersPage() {
   const { api } = useAuth()
@@ -36,13 +37,13 @@ export function OrdersPage() {
 
   return (
     <div>
-      <PageHeader kicker="Покупки" title="Заказы автомобилей" />
+      <PageHeader kicker={t('account.orders.kicker')} title={t('account.orders.title')} />
       {!orders.length ? (
         <EmptyState
           icon="receipt"
-          title="Заказов пока нет"
-          description="Оформите заказ из карточки автомобиля."
-          action={<LinkButton to={ROUTES.vehicles}>Перейти в каталог</LinkButton>}
+          title={t('account.orders.emptyTitle')}
+          description={t('account.orders.emptyDescription')}
+          action={<LinkButton to={ROUTES.vehicles}>{t('account.common.toCatalog')}</LinkButton>}
         />
       ) : (
         <ul className="m-0 list-none space-y-3 p-0">
@@ -56,10 +57,17 @@ export function OrdersPage() {
                   {formatPrice(order.final_price)}
                 </p>
                 <p className="mb-0 text-sm">
-                  <Link to={ROUTES.vehicleDetail(order.vehicle_id)} className="link">
-                    Автомобиль
-                  </Link>{' '}
-                  · салон #{order.dealership_id}
+                  {order.model_id ? (
+                    <Link
+                      to={ROUTES.vehicleDetail(order.model_id, order.vehicle_id)}
+                      className="link"
+                    >
+                      {t('account.common.vehicle')}
+                    </Link>
+                  ) : (
+                    t('account.common.vehicle')
+                  )}{' '}
+                  · {t('account.orders.dealership', { id: order.dealership_id })}
                 </p>
               </div>
               <StatusBadge status={order.status} />

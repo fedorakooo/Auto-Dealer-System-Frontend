@@ -2,6 +2,7 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import { Field, fieldControlClass } from '@/shared/ui/Field.jsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 export function Input({ id, label, error, hint, required, className, inputClassName, ...rest }) {
   return (
@@ -42,7 +43,7 @@ export function PasswordInput({ id, label, error, hint, required, className, ...
             type="button"
             className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus)]"
             onClick={() => setVisible((value) => !value)}
-            aria-label={visible ? 'Скрыть пароль' : 'Показать пароль'}
+            aria-label={visible ? t('common.password.hide') : t('common.password.show')}
             aria-pressed={visible}
           >
             <Icon name={visible ? 'eyeOff' : 'eye'} className="h-5 w-5" />

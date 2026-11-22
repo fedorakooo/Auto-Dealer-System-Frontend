@@ -11,11 +11,16 @@ import {
   fetchOperationList,
   mutateOperation,
 } from '@/features/operations/operationsService.js'
+import { ROUTES } from '@/constants/routes.js'
+import { endpoints } from '@/services/api/endpoints.js'
+import { APPOINTMENT_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES } from '@/constants/enums.js'
+import { QK } from '@/constants/queryKeys.js'
 import { statusLabel } from '@/constants/statuses.js'
 import { parseApiError } from '@/services/api/errors.js'
 import { formatDateTime } from '@/lib/format.js'
+import { t } from '@/shared/i18n/index.js'
 import { Alert } from '@/shared/ui/Alert.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
+import { Button, LinkButton } from '@/shared/ui/Button.jsx'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog.jsx'
 import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { Input } from '@/shared/ui/Input.jsx'
@@ -24,58 +29,36 @@ import { Panel } from '@/shared/ui/Panel.jsx'
 import { Select } from '@/shared/ui/Select.jsx'
 import { Spinner } from '@/shared/ui/Spinner.jsx'
 import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
-import { Textarea } from '@/shared/ui/Textarea.jsx'
-
-const PAYMENT_METHODS = [
-  { value: 'bank_transfer', label: 'Банковский перевод' },
-  { value: 'bank_card', label: 'Банковская карта' },
-  { value: 'cash', label: 'Наличные' },
-  { value: 'loan', label: 'Кредит' },
-  { value: 'lease', label: 'Лизинг' },
-]
-const PAYMENT_STATUSES = ['paid', 'pending', 'authorized', 'failed', 'refunded']
-const VEHICLE_STATUSES = ['in_stock', 'reserved', 'sold', 'service', 'unavailable']
-const APPOINTMENT_STATUSES = ['requested', 'confirmed', 'in_progress', 'completed', 'cancelled']
 
 const paymentSchema = z.object({
-  order_id: z.string().uuid('Введите UUID заказа'),
-  amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Введите сумму, например 1500.00'),
-  method: z.enum(['cash', 'bank_card', 'bank_transfer', 'loan', 'lease']),
-  status: z.enum(['pending', 'authorized', 'paid', 'failed', 'refunded']),
+  order_id: z.string().uuid({ error: () => t('staff.operations.errors.orderId') }),
+  amount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, { error: () => t('staff.operations.errors.amount') }),
+  method: z.enum(PAYMENT_METHODS),
+  status: z.enum(PAYMENT_STATUSES),
   external_reference: z.string().optional(),
-})
-
-const vehicleStatusSchema = z.object({
-  vehicle_id: z.string().uuid('Введите UUID автомобиля'),
-  status: z.enum(['in_stock', 'reserved', 'sold', 'service', 'unavailable']),
-  reason: z.string().max(1000, 'Не более 1000 символов').optional(),
 })
 
 export function StaffOperationsPage() {
   const { api } = useAuth()
   const queryClient = useQueryClient()
-  const [pendingVehicleStatus, setPendingVehicleStatus] = useState(null)
   const [pendingAppointment, setPendingAppointment] = useState(null)
 
   const appointmentsQuery = useQuery({
-    queryKey: ['staff-appointments'],
-    queryFn: () => fetchOperationList(api, '/service/appointments', { limit: 50 }),
+    queryKey: QK.staffAppointments,
+    queryFn: () => fetchOperationList(api, endpoints.serviceAppointments, { limit: 50 }),
   })
 
   const paymentForm = useForm({
     resolver: zodResolver(paymentSchema),
     defaultValues: { method: 'bank_transfer', status: 'paid' },
   })
-  const vehicleStatusForm = useForm({
-    resolver: zodResolver(vehicleStatusSchema),
-    defaultValues: { status: 'in_stock' },
-  })
-
   const paymentMutation = useMutation({
     mutationFn: (values) =>
       createWithIdempotency(
         api,
-        `/orders/${values.order_id}/payments`,
+        endpoints.orderPayments(values.order_id),
         {
           amount: values.amount,
           method: values.method,
@@ -87,60 +70,46 @@ export function StaffOperationsPage() {
     onSuccess: (_, values) => {
       clearActionIdempotencyKey(`payment:${values.order_id}`)
       paymentForm.reset()
-      queryClient.invalidateQueries({ queryKey: ['order-payments'] })
+      queryClient.invalidateQueries({ queryKey: QK.orderPayments })
     },
-  })
-
-  const vehicleStatusMutation = useMutation({
-    mutationFn: (values) =>
-      mutateOperation(api, 'post', `/vehicles/${values.vehicle_id}/status`, {
-        status: values.status,
-        reason: values.reason || null,
-      }),
-    onSuccess: () => {
-      setPendingVehicleStatus(null)
-      vehicleStatusForm.reset()
-    },
-    onError: () => setPendingVehicleStatus(null),
   })
 
   const appointmentMutation = useMutation({
     mutationFn: ({ id, status }) =>
-      mutateOperation(api, 'patch', `/service/appointments/${id}/status`, { status }),
+      mutateOperation(api, 'patch', endpoints.serviceAppointmentStatus(id), { status }),
     onSuccess: () => {
       setPendingAppointment(null)
-      queryClient.invalidateQueries({ queryKey: ['staff-appointments'] })
+      queryClient.invalidateQueries({ queryKey: QK.staffAppointments })
     },
     onError: () => setPendingAppointment(null),
   })
 
   const appointments = Array.isArray(appointmentsQuery.data) ? appointmentsQuery.data : []
   const paymentErrors = paymentForm.formState.errors
-  const statusErrors = vehicleStatusForm.formState.errors
 
   return (
     <div>
       <PageHeader
-        kicker="Сотрудникам"
-        title="Операции, платежи и сервис"
-        subtitle="Изменения статусов и финансовые операции требуют подтверждения на сервере."
+        kicker={t('staff.operations.kicker')}
+        title={t('staff.operations.title')}
+        subtitle={t('staff.operations.subtitle')}
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Зарегистрировать платёж">
+        <Panel title={t('staff.operations.payment.title')}>
           <form
             onSubmit={paymentForm.handleSubmit((values) => paymentMutation.mutate(values))}
             noValidate
           >
             <Input
               id="payment-order"
-              label="UUID заказа"
+              label={t('staff.operations.payment.orderId')}
               error={paymentErrors.order_id?.message}
               {...paymentForm.register('order_id')}
             />
             <Input
               id="payment-amount"
-              label="Сумма"
+              label={t('staff.operations.payment.amount')}
               inputMode="decimal"
               error={paymentErrors.amount?.message}
               {...paymentForm.register('amount')}
@@ -148,19 +117,19 @@ export function StaffOperationsPage() {
             <div className="grid gap-x-4 sm:grid-cols-2">
               <Select
                 id="payment-method"
-                label="Метод"
+                label={t('staff.operations.payment.method')}
                 error={paymentErrors.method?.message}
                 {...paymentForm.register('method')}
               >
                 {PAYMENT_METHODS.map((method) => (
-                  <option key={method.value} value={method.value}>
-                    {method.label}
+                  <option key={method} value={method}>
+                    {t(`staff.operations.paymentMethods.${method}`)}
                   </option>
                 ))}
               </Select>
               <Select
                 id="payment-status"
-                label="Статус"
+                label={t('staff.operations.payment.status')}
                 error={paymentErrors.status?.message}
                 {...paymentForm.register('status')}
               >
@@ -173,62 +142,32 @@ export function StaffOperationsPage() {
             </div>
             <Input
               id="payment-reference"
-              label="Внешняя ссылка"
+              label={t('staff.operations.payment.reference')}
               {...paymentForm.register('external_reference')}
             />
             {paymentMutation.isError ? (
               <Alert variant="danger">{parseApiError(paymentMutation.error).message}</Alert>
             ) : null}
             {paymentMutation.isSuccess ? (
-              <Alert variant="success">Платёж зарегистрирован.</Alert>
+              <Alert variant="success">{t('staff.operations.payment.success')}</Alert>
             ) : null}
             <Button type="submit" loading={paymentMutation.isPending}>
-              {paymentMutation.isPending ? 'Сохранение…' : 'Создать платёж'}
+              {paymentMutation.isPending
+                ? t('staff.operations.payment.saving')
+                : t('staff.operations.payment.submit')}
             </Button>
           </form>
         </Panel>
 
-        <Panel title="Статус автомобиля">
-          <form
-            onSubmit={vehicleStatusForm.handleSubmit((values) => setPendingVehicleStatus(values))}
-            noValidate
-          >
-            <Input
-              id="vehicle-status-id"
-              label="UUID автомобиля"
-              error={statusErrors.vehicle_id?.message}
-              {...vehicleStatusForm.register('vehicle_id')}
-            />
-            <Select
-              id="vehicle-status"
-              label="Новый статус"
-              error={statusErrors.status?.message}
-              {...vehicleStatusForm.register('status')}
-            >
-              {VEHICLE_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {statusLabel(status)}
-                </option>
-              ))}
-            </Select>
-            <Textarea
-              id="vehicle-status-reason"
-              label="Причина"
-              error={statusErrors.reason?.message}
-              {...vehicleStatusForm.register('reason')}
-            />
-            {vehicleStatusMutation.isError ? (
-              <Alert variant="danger">{parseApiError(vehicleStatusMutation.error).message}</Alert>
-            ) : null}
-            {vehicleStatusMutation.isSuccess ? (
-              <Alert variant="success">Статус автомобиля обновлён.</Alert>
-            ) : null}
-            <Button type="submit">Изменить статус</Button>
-          </form>
+        <Panel title={t('staff.operations.vehicleStatus.title')}>
+          <p className="text-sm">{t('staff.operations.vehicleStatus.text')}</p>
+          <LinkButton to={ROUTES.staffCatalog} variant="secondary" icon="arrowRight">
+            {t('staff.operations.vehicleStatus.link')}
+          </LinkButton>
         </Panel>
       </div>
 
-      <Panel title="Сервисные заявки" className="mt-6">
+      <Panel title={t('staff.operations.appointments.title')} className="mt-6">
         {appointmentsQuery.isLoading ? <Spinner /> : null}
         {appointmentsQuery.isError ? (
           <Alert variant="danger">{parseApiError(appointmentsQuery.error).message}</Alert>
@@ -237,7 +176,7 @@ export function StaffOperationsPage() {
           <Alert variant="danger">{parseApiError(appointmentMutation.error).message}</Alert>
         ) : null}
         {appointmentsQuery.isSuccess && !appointments.length ? (
-          <EmptyState icon="wrench" title="Заявок нет" />
+          <EmptyState icon="wrench" title={t('staff.operations.appointments.empty')} />
         ) : null}
         {appointments.length ? (
           <ul className="m-0 list-none divide-y divide-[var(--color-border)] p-0">
@@ -255,7 +194,11 @@ export function StaffOperationsPage() {
                 <Select
                   id={`appointment-status-${appointment.id}`}
                   className="mb-0 w-52"
-                  label={<span className="sr-only">Изменить статус заявки</span>}
+                  label={
+                    <span className="sr-only">
+                      {t('staff.operations.appointments.changeStatus')}
+                    </span>
+                  }
                   value={appointment.status || 'requested'}
                   onChange={(event) =>
                     setPendingAppointment({ id: appointment.id, status: event.target.value })
@@ -274,23 +217,13 @@ export function StaffOperationsPage() {
       </Panel>
 
       <ConfirmDialog
-        open={pendingVehicleStatus !== null}
-        title="Изменить статус автомобиля?"
-        description={
-          pendingVehicleStatus
-            ? `Новый статус: «${statusLabel(pendingVehicleStatus.status)}».`
-            : undefined
-        }
-        loading={vehicleStatusMutation.isPending}
-        onConfirm={() => vehicleStatusMutation.mutate(pendingVehicleStatus)}
-        onCancel={() => setPendingVehicleStatus(null)}
-      />
-      <ConfirmDialog
         open={pendingAppointment !== null}
-        title="Изменить статус заявки?"
+        title={t('staff.operations.appointments.confirmTitle')}
         description={
           pendingAppointment
-            ? `Новый статус: «${statusLabel(pendingAppointment.status)}».`
+            ? t('staff.operations.appointments.confirmDescription', {
+                status: statusLabel(pendingAppointment.status),
+              })
             : undefined
         }
         loading={appointmentMutation.isPending}

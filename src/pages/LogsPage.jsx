@@ -5,7 +5,9 @@ import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { LOG_EVENT_TYPES, fetchLogs } from '@/features/logs/logService.js'
 import { LogReportsSection } from '@/features/logs/LogReportsSection.jsx'
 import { parseApiError } from '@/services/api'
+import { QK } from '@/constants/queryKeys.js'
 import { formatDateTime } from '@/lib/format.js'
+import { t } from '@/shared/i18n/index.js'
 import { Badge } from '@/shared/ui/Badge.jsx'
 import { Button } from '@/shared/ui/Button.jsx'
 import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
@@ -47,31 +49,38 @@ function describeAction(row) {
   return '—'
 }
 
-const COLUMNS = [
-  {
-    key: 'timestamp',
-    header: 'Время',
-    className: 'whitespace-nowrap',
-    render: (row) => (row.timestamp ? formatDateTime(String(row.timestamp)) : '—'),
-  },
-  {
-    key: 'event_type',
-    header: 'Тип события',
-    render: (row) =>
-      row.event_type ? (
-        <Badge tone={EVENT_TONES[row.event_type] ?? 'neutral'}>{String(row.event_type)}</Badge>
-      ) : (
-        '—'
-      ),
-  },
-  {
-    key: 'user_id',
-    header: 'Пользователь',
-    className: 'font-mono text-xs break-all',
-    render: (row) => (row.user_id != null ? String(row.user_id) : '—'),
-  },
-  { key: 'action', header: 'Действие / запрос', className: 'break-words', render: describeAction },
-]
+function buildColumns() {
+  return [
+    {
+      key: 'timestamp',
+      header: t('staff.logs.columns.time'),
+      className: 'whitespace-nowrap',
+      render: (row) => (row.timestamp ? formatDateTime(String(row.timestamp)) : '—'),
+    },
+    {
+      key: 'event_type',
+      header: t('staff.logs.columns.eventType'),
+      render: (row) =>
+        row.event_type ? (
+          <Badge tone={EVENT_TONES[row.event_type] ?? 'neutral'}>{String(row.event_type)}</Badge>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      key: 'user_id',
+      header: t('staff.logs.columns.user'),
+      className: 'font-mono text-xs break-all',
+      render: (row) => (row.user_id != null ? String(row.user_id) : '—'),
+    },
+    {
+      key: 'action',
+      header: t('staff.logs.columns.action'),
+      className: 'break-words',
+      render: describeAction,
+    },
+  ]
+}
 
 export function LogsPage() {
   const { api } = useAuth()
@@ -84,7 +93,7 @@ export function LogsPage() {
   const [applied, setApplied] = useState(EMPTY_FILTERS)
 
   const query = useQuery({
-    queryKey: ['logs', applied],
+    queryKey: QK.logs(applied),
     queryFn: async () => {
       const raw = await fetchLogs(api, applied)
       return logListSchema.parse(raw)
@@ -116,44 +125,44 @@ export function LogsPage() {
   return (
     <div>
       <PageHeader
-        kicker="Аудит"
-        title="Логи и отчёты"
-        subtitle="Поиск по журналу аудита, агрегированные отчёты и выгрузка в CSV/JSON."
+        kicker={t('staff.logs.kicker')}
+        title={t('staff.logs.title')}
+        subtitle={t('staff.logs.subtitle')}
       />
 
-      <Panel title="Фильтры журнала" className="mb-6">
+      <Panel title={t('staff.logs.filters.title')} className="mb-6">
         <form
           onSubmit={applyFilters}
           className="grid items-end gap-x-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           <Input
             id="log-start"
-            label="С (дата/время)"
+            label={t('staff.logs.filters.from')}
             type="datetime-local"
             value={startLocal}
             onChange={(event) => setStartLocal(event.target.value)}
           />
           <Input
             id="log-end"
-            label="По (дата/время)"
+            label={t('staff.logs.filters.to')}
             type="datetime-local"
             value={endLocal}
             onChange={(event) => setEndLocal(event.target.value)}
           />
           <Input
             id="log-user"
-            label="ID пользователя"
+            label={t('staff.logs.filters.userId')}
             value={userId}
             onChange={(event) => setUserId(event.target.value)}
             placeholder="UUID"
           />
           <Select
             id="log-event"
-            label="Тип события"
+            label={t('staff.logs.filters.eventType')}
             value={eventType}
             onChange={(event) => setEventType(event.target.value)}
           >
-            <option value="">Все</option>
+            <option value="">{t('staff.logs.filters.allEvents')}</option>
             {LOG_EVENT_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -162,7 +171,7 @@ export function LogsPage() {
           </Select>
           <Input
             id="log-limit"
-            label="Лимит записей"
+            label={t('staff.logs.filters.limit')}
             type="number"
             min={1}
             max={MAX_LIMIT}
@@ -171,16 +180,16 @@ export function LogsPage() {
           />
           <Input
             id="log-skip"
-            label="Пропустить"
+            label={t('staff.logs.filters.skip')}
             type="number"
             min={0}
             value={skip}
             onChange={(event) => setSkip(event.target.value)}
           />
           <div className="mb-4 flex gap-3 sm:col-span-2 lg:col-span-3">
-            <Button type="submit">Применить фильтры</Button>
+            <Button type="submit">{t('staff.logs.filters.apply')}</Button>
             <Button variant="secondary" onClick={clearFilters}>
-              Сбросить
+              {t('staff.logs.filters.reset')}
             </Button>
           </div>
         </form>
@@ -196,18 +205,19 @@ export function LogsPage() {
       {query.isSuccess ? (
         <>
           <p className="mb-3 text-sm" aria-live="polite">
-            Записей: <strong className="text-[var(--color-text)]">{query.data.length}</strong>
+            {t('staff.logs.total')}{' '}
+            <strong className="text-[var(--color-text)]">{query.data.length}</strong>
           </p>
           <DataTable
-            caption="Журнал аудита"
-            columns={COLUMNS}
+            caption={t('staff.logs.tableCaption')}
+            columns={buildColumns()}
             rows={query.data}
             getRowKey={(row, index) => (typeof row._id === 'string' ? row._id : `row-${index}`)}
-            emptyMessage="Записей по заданным фильтрам нет"
+            emptyMessage={t('staff.logs.empty')}
           />
           <details className="mt-4">
             <summary className="cursor-pointer text-sm font-medium text-[var(--color-text)]">
-              Полный JSON ответа
+              {t('staff.logs.rawJson')}
             </summary>
             <pre className="mt-2 max-h-[50vh] overflow-auto rounded-lg border border-[var(--color-border)] bg-slate-950 p-4 text-xs text-slate-100">
               {JSON.stringify(query.data, null, 2)}

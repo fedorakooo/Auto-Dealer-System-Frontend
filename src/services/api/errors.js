@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { ZodError } from 'zod'
-
-const INVALID_RESPONSE_MESSAGE = 'Сервер вернул данные в неожиданном формате. Попробуйте позже.'
+import { t } from '@/shared/i18n/index.js'
 
 export function parseApiError(err) {
   if (axios.isAxiosError(err)) {
@@ -45,7 +44,7 @@ export function parseApiError(err) {
   }
   if (err instanceof ZodError) {
     return {
-      message: INVALID_RESPONSE_MESSAGE,
+      message: t('common.errors.invalidResponse'),
     }
   }
   if (err instanceof Error) {

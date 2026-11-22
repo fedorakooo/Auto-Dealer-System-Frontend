@@ -7,6 +7,7 @@ import { AccountLayout } from '@/layouts/AccountLayout.jsx'
 import { StaffLayout } from '@/layouts/StaffLayout.jsx'
 import { ProtectedRoute } from '@/components/routing/ProtectedRoute.jsx'
 import { StaffRoute } from '@/components/routing/StaffRoute.jsx'
+import { FeatureRoute } from '@/components/routing/FeatureRoute.jsx'
 import { FeatureErrorBoundary } from '@/components/routing/FeatureErrorBoundary.jsx'
 import { RouteErrorFallback } from '@/app/RouteErrorFallback.jsx'
 import { lazyNamed } from '@/app/lazyRoute.js'
@@ -59,6 +60,14 @@ function wrap(element) {
   return <FeatureErrorBoundary>{element}</FeatureErrorBoundary>
 }
 
+function feature(name, element) {
+  return wrap(
+    <FeatureRoute feature={name} fallback={<NotFoundPage />}>
+      {element}
+    </FeatureRoute>
+  )
+}
+
 export const router = createBrowserRouter([
   {
     element: <RootProviders />,
@@ -74,9 +83,9 @@ export const router = createBrowserRouter([
           { path: 'login', element: wrap(<LoginPage />) },
           { path: 'register', element: wrap(<RegisterPage />) },
           { path: 'vehicles', element: wrap(<VehiclesPage />) },
-          { path: 'vehicles/:id', element: wrap(<VehicleDetailPage />) },
           { path: 'models', element: wrap(<ModelsPage />) },
           { path: 'models/:id', element: wrap(<ModelDetailPage />) },
+          { path: 'models/:modelId/vehicles/:vehicleId', element: wrap(<VehicleDetailPage />) },
           { path: 'dealerships', element: wrap(<DealershipsPage />) },
           { path: 'dealerships/:id', element: wrap(<DealershipDetailPage />) },
           {
@@ -93,10 +102,16 @@ export const router = createBrowserRouter([
                 children: [
                   { index: true, element: wrap(<AccountPage />) },
                   { path: 'orders', element: wrap(<OrdersPage />) },
-                  { path: 'favorites', element: wrap(<FavoritesPage />) },
-                  { path: 'test-drives', element: wrap(<TestDrivesPage />) },
-                  { path: 'custom-orders', element: wrap(<CustomOrdersPage />) },
-                  { path: 'service', element: wrap(<ServiceAppointmentsPage />) },
+                  { path: 'favorites', element: feature('favorites', <FavoritesPage />) },
+                  { path: 'test-drives', element: feature('test_drives', <TestDrivesPage />) },
+                  {
+                    path: 'custom-orders',
+                    element: feature('custom_orders', <CustomOrdersPage />),
+                  },
+                  {
+                    path: 'service',
+                    element: feature('service_appointments', <ServiceAppointmentsPage />),
+                  },
                   { path: 'addresses', element: wrap(<AddressesPage />) },
                 ],
               },

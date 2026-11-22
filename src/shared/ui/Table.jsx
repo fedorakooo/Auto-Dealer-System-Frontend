@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { EmptyState } from '@/shared/ui/EmptyState.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 /**
  * Generic read-only table. `columns` items: { key, header, render?(row), className? }.
@@ -10,7 +11,7 @@ export function DataTable({
   rows,
   getRowKey,
   caption,
-  emptyMessage = 'Нет данных',
+  emptyMessage = t('common.noData'),
   className,
 }) {
   if (!rows.length) {

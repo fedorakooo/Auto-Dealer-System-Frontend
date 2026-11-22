@@ -1,13 +1,14 @@
 import { Button } from '@/shared/ui/Button.jsx'
 import { Modal } from '@/shared/ui/Modal.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 /** Accessible replacement for `window.confirm`. */
 export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = 'Подтвердить',
-  cancelLabel = 'Отмена',
+  confirmLabel = t('common.actions.confirm'),
+  cancelLabel = t('common.actions.cancel'),
   destructive = false,
   loading = false,
   onConfirm,

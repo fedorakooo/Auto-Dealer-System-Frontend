@@ -1,29 +1,34 @@
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes.js'
-import { PUBLIC_IMAGES } from '@/shared/config/publicImages.js'
+import { useBrand } from '@/features/brand/brandContext.js'
+import { homeImages } from '@/features/brand/brandUtils.js'
+import { t } from '@/shared/i18n/index.js'
 
-const blocks = [
+const BLOCKS = [
   {
-    title: 'Сервисное обслуживание',
-    subtitle: 'ТО, диагностика, ремонт',
+    textKey: 'home.service.blocks.maintenance',
     href: ROUTES.dealerships,
-    image: PUBLIC_IMAGES.serviceMaintenance,
+    image: 'serviceMaintenance',
   },
   {
-    title: 'Запись в сервис',
-    subtitle: 'Онлайн и в салоне',
+    textKey: 'home.service.blocks.booking',
     href: ROUTES.dealerships,
-    image: PUBLIC_IMAGES.serviceBooking,
+    image: 'serviceBooking',
+    feature: 'service_appointments',
   },
   {
-    title: 'Запасные части',
-    subtitle: 'Оригинальные комплектующие',
+    textKey: 'home.service.blocks.parts',
     href: ROUTES.dealerships,
-    image: PUBLIC_IMAGES.serviceParts,
+    image: 'serviceParts',
   },
 ]
 
 export function HomeServiceStrip() {
+  const brand = useBrand()
+  const images = homeImages(brand)
+  const blocks = BLOCKS.filter((block) => !block.feature || brand.features[block.feature]).map(
+    (block) => ({ ...block, image: images[block.image] })
+  )
   return (
     <section
       className="bg-[var(--color-primary)] py-16 text-white sm:py-20"
@@ -32,26 +37,25 @@ export function HomeServiceStrip() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 grid gap-5 lg:grid-cols-2 lg:items-end">
           <div>
-            <p className="mb-3 text-xs font-semibold tracking-[0.22em] text-red-400 uppercase">
-              После покупки
+            <p className="mb-3 text-xs font-semibold tracking-[0.22em] text-[color-mix(in_srgb,var(--color-accent)_70%,white)] uppercase">
+              {t('home.service.kicker')}
             </p>
             <h2
               id="service-title"
               className="mb-0 max-w-xl text-3xl tracking-[-0.03em] text-white sm:text-4xl"
             >
-              Сервис, который остаётся рядом
+              {t('home.service.title')}
             </h2>
           </div>
           <p className="mb-0 max-w-xl text-sm leading-6 text-slate-300 lg:justify-self-end">
-            Плановое обслуживание, удобная запись и оригинальные комплектующие в дилерских центрах
-            сети.
+            {t('home.service.description')}
           </p>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-3">
+        <div className="grid gap-5 sm:auto-cols-fr sm:grid-flow-col">
           {blocks.map((block) => (
             <Link
-              key={block.title}
+              key={block.textKey}
               to={block.href}
               className="group relative isolate min-h-72 overflow-hidden rounded-2xl border border-white/15 bg-[var(--color-primary-hover)] text-white"
             >
@@ -66,8 +70,12 @@ export function HomeServiceStrip() {
               <span className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950 via-slate-950/45 to-slate-950/5" />
               <span className="absolute right-0 bottom-0 left-0 flex items-end justify-between gap-4 p-5">
                 <span>
-                  <span className="block font-semibold text-white">{block.title}</span>
-                  <span className="mt-1 block text-sm text-slate-300">{block.subtitle}</span>
+                  <span className="block font-semibold text-white">
+                    {t(`${block.textKey}.title`)}
+                  </span>
+                  <span className="mt-1 block text-sm text-slate-300">
+                    {t(`${block.textKey}.subtitle`)}
+                  </span>
                 </span>
                 <span
                   className="text-xl text-white/65 transition-transform group-hover:translate-x-1 group-hover:text-white"

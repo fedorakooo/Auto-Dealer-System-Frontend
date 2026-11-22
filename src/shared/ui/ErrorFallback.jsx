@@ -1,8 +1,14 @@
 import clsx from 'clsx'
 import { Button } from '@/shared/ui/Button.jsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
-export function ErrorFallback({ title = 'Что-то пошло не так', message, onRetry, className }) {
+export function ErrorFallback({
+  title = t('common.errors.somethingWentWrong'),
+  message,
+  onRetry,
+  className,
+}) {
   return (
     <div
       className={clsx(
@@ -21,7 +27,7 @@ export function ErrorFallback({ title = 'Что-то пошло не так', me
           {onRetry ? (
             <div className="mt-5">
               <Button variant="secondary" onClick={onRetry}>
-                Повторить
+                {t('common.actions.retry')}
               </Button>
             </div>
           ) : null}

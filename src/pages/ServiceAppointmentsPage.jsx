@@ -12,6 +12,8 @@ import {
   mutateOperation,
 } from '@/features/operations/operationsService.js'
 import { parseApiError } from '@/services/api/errors.js'
+import { QK } from '@/constants/queryKeys.js'
+import { endpoints } from '@/services/api/endpoints.js'
 import { applyApiFieldErrors } from '@/lib/formErrors.js'
 import { formatDateTime } from '@/lib/format.js'
 import { Alert } from '@/shared/ui/Alert.jsx'
@@ -24,14 +26,24 @@ import { Panel } from '@/shared/ui/Panel.jsx'
 import { Spinner } from '@/shared/ui/Spinner.jsx'
 import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
 import { Textarea } from '@/shared/ui/Textarea.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const IDEMPOTENCY_SCOPE = 'service-appointment'
 
 const schema = z.object({
-  dealership_id: z.coerce.number().positive('Укажите ID дилерского центра'),
-  vehicle_id: z.string().uuid('Введите корректный UUID').optional().or(z.literal('')),
-  requested_datetime: z.string().min(1, 'Выберите дату и время'),
-  notes: z.string().max(1000, 'Не более 1000 символов').optional(),
+  dealership_id: z.coerce
+    .number()
+    .positive({ error: () => t('account.service.dealershipIdRequired') }),
+  vehicle_id: z
+    .string()
+    .uuid({ error: () => t('account.service.vehicleIdInvalid') })
+    .optional()
+    .or(z.literal('')),
+  requested_datetime: z.string().min(1, { error: () => t('account.service.dateTimeRequired') }),
+  notes: z
+    .string()
+    .max(1000, { error: () => t('account.service.notesTooLong') })
+    .optional(),
 })
 
 export function ServiceAppointmentsPage() {
@@ -40,12 +52,12 @@ export function ServiceAppointmentsPage() {
   const [cancelTarget, setCancelTarget] = useState(null)
 
   const appointmentsQuery = useQuery({
-    queryKey: ['service-appointments'],
-    queryFn: () => fetchOperationList(api, '/service/appointments', { limit: 50 }),
+    queryKey: QK.serviceAppointments,
+    queryFn: () => fetchOperationList(api, endpoints.serviceAppointments, { limit: 50 }),
   })
   const catalogQuery = useQuery({
-    queryKey: ['service-catalog'],
-    queryFn: () => fetchOperationList(api, '/service/catalog', { limit: 100 }),
+    queryKey: QK.serviceCatalog,
+    queryFn: () => fetchOperationList(api, endpoints.serviceCatalog, { limit: 100 }),
   })
 
   const {
@@ -60,7 +72,7 @@ export function ServiceAppointmentsPage() {
     mutationFn: (values) =>
       createWithIdempotency(
         api,
-        '/service/appointments',
+        endpoints.serviceAppointments,
         {
           ...values,
           vehicle_id: values.vehicle_id || null,
@@ -72,16 +84,16 @@ export function ServiceAppointmentsPage() {
     onSuccess: () => {
       clearActionIdempotencyKey(IDEMPOTENCY_SCOPE)
       reset()
-      queryClient.invalidateQueries({ queryKey: ['service-appointments'] })
+      queryClient.invalidateQueries({ queryKey: QK.serviceAppointments })
     },
     onError: (error) => applyApiFieldErrors(error, setError),
   })
 
   const cancelMutation = useMutation({
-    mutationFn: (id) => mutateOperation(api, 'delete', `/service/appointments/${id}`),
+    mutationFn: (id) => mutateOperation(api, 'delete', endpoints.serviceAppointment(id)),
     onSuccess: () => {
       setCancelTarget(null)
-      queryClient.invalidateQueries({ queryKey: ['service-appointments'] })
+      queryClient.invalidateQueries({ queryKey: QK.serviceAppointments })
     },
   })
 
@@ -91,9 +103,9 @@ export function ServiceAppointmentsPage() {
   return (
     <div>
       <PageHeader
-        kicker="После продажи"
-        title="Сервисные записи"
-        subtitle="Запишитесь на обслуживание; повторная отправка защищена ключом идемпотентности."
+        kicker={t('account.service.kicker')}
+        title={t('account.service.title')}
+        subtitle={t('account.service.subtitle')}
       />
 
       {appointmentsQuery.isLoading ? <Spinner /> : null}
@@ -103,8 +115,8 @@ export function ServiceAppointmentsPage() {
       {appointmentsQuery.isSuccess && !appointments.length ? (
         <EmptyState
           icon="wrench"
-          title="Сервисных записей пока нет"
-          description="Оформите первую запись в форме ниже."
+          title={t('account.service.emptyTitle')}
+          description={t('account.service.emptyDescription')}
         />
       ) : null}
       {appointments.length ? (
@@ -118,11 +130,13 @@ export function ServiceAppointmentsPage() {
                 <strong className="text-[var(--color-text)]">
                   {appointment.requested_datetime
                     ? formatDateTime(appointment.requested_datetime)
-                    : 'Запись'}
+                    : t('account.service.appointment')}
                 </strong>
                 <StatusBadge status={appointment.status} />
               </div>
-              <p className="mt-2 mb-0 text-sm">{appointment.notes || 'Без комментария'}</p>
+              <p className="mt-2 mb-0 text-sm">
+                {appointment.notes || t('account.service.noComment')}
+              </p>
               {appointment.status === 'requested' ? (
                 <Button
                   className="mt-3"
@@ -130,7 +144,7 @@ export function ServiceAppointmentsPage() {
                   size="sm"
                   onClick={() => setCancelTarget(appointment.id)}
                 >
-                  Отменить запись
+                  {t('account.service.cancel')}
                 </Button>
               ) : null}
             </li>
@@ -138,53 +152,55 @@ export function ServiceAppointmentsPage() {
         </ul>
       ) : null}
 
-      <Panel title="Новая сервисная запись" className="mt-10 max-w-xl">
+      <Panel title={t('account.service.newAppointment')} className="mt-10 max-w-xl">
         <form onSubmit={handleSubmit((values) => createMutation.mutate(values))} noValidate>
           <Input
             id="service-dealer"
-            label="ID дилерского центра"
+            label={t('account.service.dealershipId')}
             inputMode="numeric"
             error={errors.dealership_id?.message}
             {...register('dealership_id')}
           />
           <Input
             id="service-vehicle"
-            label="ID автомобиля (необязательно)"
-            hint="UUID автомобиля из вашего заказа"
+            label={t('account.service.vehicleId')}
+            hint={t('account.service.vehicleIdHint')}
             error={errors.vehicle_id?.message}
             {...register('vehicle_id')}
           />
           <Input
             id="service-time"
-            label="Дата и время"
+            label={t('account.common.dateTime')}
             type="datetime-local"
             error={errors.requested_datetime?.message}
             {...register('requested_datetime')}
           />
           <Textarea
             id="service-notes"
-            label="Комментарий"
+            label={t('account.common.comment')}
             error={errors.notes?.message}
             {...register('notes')}
           />
           {catalogSize !== null ? (
-            <p className="text-sm">Доступно работ в каталоге: {catalogSize}.</p>
+            <p className="text-sm">{t('account.service.catalogSize', { count: catalogSize })}</p>
           ) : null}
           {createMutation.isError ? (
             <Alert variant="danger">{parseApiError(createMutation.error).message}</Alert>
           ) : null}
           <Button type="submit" loading={createMutation.isPending}>
-            {createMutation.isPending ? 'Отправка…' : 'Создать запись'}
+            {createMutation.isPending
+              ? t('account.service.submitting')
+              : t('account.service.submit')}
           </Button>
         </form>
       </Panel>
 
       <ConfirmDialog
         open={cancelTarget !== null}
-        title="Отменить сервисную запись?"
-        description="Запись будет отменена. Это действие нельзя отменить."
-        confirmLabel="Отменить запись"
-        cancelLabel="Не отменять"
+        title={t('account.service.cancelDialog.title')}
+        description={t('account.service.cancelDialog.description')}
+        confirmLabel={t('account.service.cancelDialog.confirm')}
+        cancelLabel={t('account.service.cancelDialog.dismiss')}
         destructive
         loading={cancelMutation.isPending}
         onConfirm={() => cancelMutation.mutate(cancelTarget)}

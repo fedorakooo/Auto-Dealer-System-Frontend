@@ -9,6 +9,7 @@ import { ORDER_STATUSES } from '@/constants/enums.js'
 import { statusLabel } from '@/constants/statuses.js'
 import { parseApiError } from '@/services/api'
 import { formatPrice } from '@/lib/format.js'
+import { t } from '@/shared/i18n/index.js'
 import { Alert } from '@/shared/ui/Alert.jsx'
 import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
 import { PageHeader } from '@/shared/ui/PageHeader.jsx'
@@ -32,34 +33,40 @@ export function StaffOrdersPage() {
     mutationFn: async ({ id, status }) => {
       await patchOrderStatus(api, id, { status })
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.all.orders }),
   })
 
   const columns = [
     {
       key: 'vehicle_id',
-      header: 'Автомобиль',
-      render: (order) => (
-        <Link to={ROUTES.vehicleDetail(order.vehicle_id)} className="link font-mono text-xs">
-          {order.vehicle_id}
-        </Link>
-      ),
+      header: t('staff.orders.columns.vehicle'),
+      render: (order) =>
+        order.model_id ? (
+          <Link
+            to={ROUTES.vehicleDetail(order.model_id, order.vehicle_id)}
+            className="link font-mono text-xs"
+          >
+            {order.vehicle_id}
+          </Link>
+        ) : (
+          <span className="font-mono text-xs">{order.vehicle_id}</span>
+        ),
     },
     {
       key: 'final_price',
-      header: 'Сумма',
+      header: t('staff.orders.columns.amount'),
       className: '[font-variant-numeric:tabular-nums]',
       render: (order) => formatPrice(order.final_price),
     },
     {
       key: 'status',
-      header: 'Статус',
+      header: t('staff.orders.columns.status'),
       className: 'min-w-56',
       render: (order) => (
         <Select
           id={`order-status-${order.id}`}
           className="mb-0"
-          label={<span className="sr-only">Статус заказа {order.id}</span>}
+          label={<span className="sr-only">{t('staff.orders.statusLabel', { id: order.id })}</span>}
           value={order.status}
           disabled={mutation.isPending}
           onChange={(event) => mutation.mutate({ id: order.id, status: event.target.value })}
@@ -77,9 +84,9 @@ export function StaffOrdersPage() {
   return (
     <div>
       <PageHeader
-        kicker="Сотрудникам"
-        title="Заказы"
-        subtitle="Смена статуса заказа применяется сразу после выбора."
+        kicker={t('staff.orders.kicker')}
+        title={t('staff.orders.title')}
+        subtitle={t('staff.orders.subtitle')}
       />
       {mutation.isError ? (
         <Alert variant="danger">{parseApiError(mutation.error).message}</Alert>
@@ -93,11 +100,11 @@ export function StaffOrdersPage() {
       ) : null}
       {query.isSuccess ? (
         <DataTable
-          caption="Заказы автомобилей"
+          caption={t('staff.orders.tableCaption')}
           columns={columns}
           rows={query.data.orders}
           getRowKey={(order) => order.id}
-          emptyMessage="Заказов пока нет"
+          emptyMessage={t('staff.orders.empty')}
         />
       ) : null}
     </div>

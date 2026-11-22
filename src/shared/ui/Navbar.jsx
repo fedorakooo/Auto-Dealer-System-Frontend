@@ -5,10 +5,12 @@ import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { ROUTES } from '@/constants/routes.js'
 import { canAccessStaff } from '@/constants/roles.js'
 import { useUiStore } from '@/app/store/uiStore.js'
-import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_E164 } from '@/shared/config/contact.js'
+import { useBrand } from '@/features/brand/brandContext.js'
 import { PUBLIC_NAV } from '@/shared/config/navigation.js'
 import { Brand } from '@/shared/ui/Brand.jsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { LanguageSwitcher } from '@/shared/ui/LanguageSwitcher.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const linkClass = ({ isActive }) =>
   clsx(
@@ -23,6 +25,7 @@ const ghostActionClass =
 
 export function Navbar({ variant = 'default' }) {
   const { user, logout } = useAuth()
+  const { contacts } = useBrand()
   const { pathname } = useLocation()
   const staff = Boolean(user && canAccessStaff(user.role))
   const mobileOpen = useUiStore((s) => s.mobileMenuOpen)
@@ -30,8 +33,8 @@ export function Navbar({ variant = 'default' }) {
 
   const links = [
     ...PUBLIC_NAV,
-    ...(user ? [{ to: ROUTES.account, label: 'Кабинет' }] : []),
-    ...(staff ? [{ to: ROUTES.staffDashboard, label: 'Сотрудникам' }] : []),
+    ...(user ? [{ to: ROUTES.account, labelKey: 'layout.nav.account' }] : []),
+    ...(staff ? [{ to: ROUTES.staffDashboard, labelKey: 'layout.nav.staff' }] : []),
   ]
 
   useEffect(() => {
@@ -57,22 +60,25 @@ export function Navbar({ variant = 'default' }) {
       <div className="mx-auto flex min-h-[4.5rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Brand />
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Основное меню">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label={t('layout.header.mainMenu')}>
           {links.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkClass}>
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </nav>
 
         <div className="flex items-center gap-2">
-          <a
-            href={`tel:${CONTACT_PHONE_E164}`}
-            className="hidden items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-[var(--color-on-primary-muted)] transition hover:text-white xl:inline-flex"
-          >
-            <Icon name="phone" className="h-4 w-4" />
-            {CONTACT_PHONE_DISPLAY}
-          </a>
+          <LanguageSwitcher />
+          {contacts.phone ? (
+            <a
+              href={`tel:${contacts.phone}`}
+              className="hidden items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-[var(--color-on-primary-muted)] transition hover:text-white xl:inline-flex"
+            >
+              <Icon name="phone" className="h-4 w-4" />
+              {contacts.phone_display || contacts.phone}
+            </a>
+          ) : null}
           {user ? (
             <>
               <span
@@ -83,27 +89,27 @@ export function Navbar({ variant = 'default' }) {
               </span>
               <button type="button" className={ghostActionClass} onClick={() => logout()}>
                 <Icon name="logout" className="h-4 w-4" />
-                <span className="hidden sm:inline">Выход</span>
-                <span className="sr-only sm:hidden">Выход</span>
+                <span className="hidden sm:inline">{t('layout.header.logout')}</span>
+                <span className="sr-only sm:hidden">{t('layout.header.logout')}</span>
               </button>
             </>
           ) : (
             <>
               <Link to={ROUTES.login} className={ghostActionClass}>
-                Вход
+                {t('layout.header.login')}
               </Link>
               <Link
                 to={ROUTES.register}
                 className="hidden min-h-11 items-center rounded-md bg-[var(--color-accent)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--color-accent-strong)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
               >
-                Регистрация
+                {t('layout.header.register')}
               </Link>
             </>
           )}
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-white/20 text-white transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:hidden"
-            aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
+            aria-label={mobileOpen ? t('layout.header.closeMenu') : t('layout.header.openMenu')}
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation"
             onClick={() => setMobileMenuOpen(!mobileOpen)}
@@ -118,10 +124,10 @@ export function Navbar({ variant = 'default' }) {
           id="mobile-navigation"
           className="border-t border-white/10 bg-[var(--color-primary)] px-4 py-4 shadow-xl lg:hidden"
         >
-          <nav className="flex flex-col gap-1 text-sm" aria-label="Мобильное меню">
+          <nav className="flex flex-col gap-1 text-sm" aria-label={t('layout.header.mobileMenu')}>
             {links.map((item) => (
               <NavLink key={item.to} to={item.to} className={linkClass}>
-                {item.label}
+                {t(item.labelKey)}
               </NavLink>
             ))}
             {user ? null : (
@@ -129,16 +135,18 @@ export function Navbar({ variant = 'default' }) {
                 to={ROUTES.register}
                 className="mt-2 inline-flex min-h-11 items-center justify-center rounded-md bg-[var(--color-accent)] px-4 text-sm font-semibold text-white hover:text-white"
               >
-                Регистрация
+                {t('layout.header.register')}
               </Link>
             )}
-            <a
-              href={`tel:${CONTACT_PHONE_E164}`}
-              className="mt-3 flex items-center justify-center gap-2 border-t border-white/10 pt-4 text-sm font-medium text-white"
-            >
-              <Icon name="phone" className="h-4 w-4" />
-              {CONTACT_PHONE_DISPLAY}
-            </a>
+            {contacts.phone ? (
+              <a
+                href={`tel:${contacts.phone}`}
+                className="mt-3 flex items-center justify-center gap-2 border-t border-white/10 pt-4 text-sm font-medium text-white"
+              >
+                <Icon name="phone" className="h-4 w-4" />
+                {contacts.phone_display || contacts.phone}
+              </a>
+            ) : null}
           </nav>
         </div>
       ) : null}

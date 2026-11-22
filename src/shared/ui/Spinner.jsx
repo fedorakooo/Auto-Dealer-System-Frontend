@@ -1,6 +1,7 @@
 import clsx from 'clsx'
+import { t } from '@/shared/i18n/index.js'
 
-export function Spinner({ label = 'Загрузка', className }) {
+export function Spinner({ label = t('common.loading'), className }) {
   return (
     <div className={clsx('flex justify-center py-12', className)} role="status" aria-live="polite">
       <span className="sr-only">{label}</span>

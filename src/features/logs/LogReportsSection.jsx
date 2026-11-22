@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { downloadLogReport, fetchLogReport } from '@/features/logs/logService.js'
 import { parseApiError } from '@/services/api'
+import { QK } from '@/constants/queryKeys.js'
+import { t } from '@/shared/i18n/index.js'
 import { Alert } from '@/shared/ui/Alert.jsx'
 import { Button } from '@/shared/ui/Button.jsx'
 import { Panel } from '@/shared/ui/Panel.jsx'
@@ -11,17 +13,13 @@ import { Skeleton } from '@/shared/ui/Skeleton.jsx'
 import { DataTable } from '@/shared/ui/Table.jsx'
 
 const REPORTS = [
-  { value: 'activity', label: 'Активность по периодам', hasPeriod: true },
-  { value: 'top-users', label: 'Самые активные пользователи' },
-  { value: 'crud-stats', label: 'Статистика CRUD-операций' },
-  { value: 'anomalies', label: 'Аномалии' },
+  { value: 'activity', labelKey: 'staff.logs.reports.types.activity', hasPeriod: true },
+  { value: 'top-users', labelKey: 'staff.logs.reports.types.topUsers' },
+  { value: 'crud-stats', labelKey: 'staff.logs.reports.types.crudStats' },
+  { value: 'anomalies', labelKey: 'staff.logs.reports.types.anomalies' },
 ]
 
-const PERIODS = [
-  { value: 'day', label: 'День' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-]
+const PERIODS = ['day', 'week', 'month']
 
 function toColumns(rows) {
   const keys = new Set()
@@ -47,7 +45,7 @@ export function LogReportsSection() {
   const params = current.hasPeriod ? { period } : {}
 
   const query = useQuery({
-    queryKey: ['log-report', report, params],
+    queryKey: QK.logReport(report, params),
     queryFn: () => fetchLogReport(api, report, params),
   })
 
@@ -68,8 +66,8 @@ export function LogReportsSection() {
   return (
     <Panel
       className="mt-8"
-      title="Отчёты"
-      description="Агрегированные отчёты по журналу аудита с выгрузкой в CSV или JSON."
+      title={t('staff.logs.reports.title')}
+      description={t('staff.logs.reports.description')}
       actions={
         <>
           <Button
@@ -78,7 +76,7 @@ export function LogReportsSection() {
             disabled={exporting}
             onClick={() => handleExport('csv')}
           >
-            Экспорт CSV
+            {t('staff.logs.reports.exportCsv')}
           </Button>
           <Button
             variant="secondary"
@@ -86,7 +84,7 @@ export function LogReportsSection() {
             disabled={exporting}
             onClick={() => handleExport('json')}
           >
-            Экспорт JSON
+            {t('staff.logs.reports.exportJson')}
           </Button>
         </>
       }
@@ -95,13 +93,13 @@ export function LogReportsSection() {
         <Select
           id="report-type"
           className="mb-0"
-          label="Отчёт"
+          label={t('staff.logs.reports.report')}
           value={report}
           onChange={(event) => setReport(event.target.value)}
         >
           {REPORTS.map((item) => (
             <option key={item.value} value={item.value}>
-              {item.label}
+              {t(item.labelKey)}
             </option>
           ))}
         </Select>
@@ -109,13 +107,13 @@ export function LogReportsSection() {
           <Select
             id="report-period"
             className="mb-0"
-            label="Период"
+            label={t('staff.logs.reports.period')}
             value={period}
             onChange={(event) => setPeriod(event.target.value)}
           >
             {PERIODS.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
+              <option key={item} value={item}>
+                {t(`staff.logs.reports.periods.${item}`)}
               </option>
             ))}
           </Select>
@@ -127,11 +125,11 @@ export function LogReportsSection() {
       {query.isError ? <Alert variant="danger">{parseApiError(query.error).message}</Alert> : null}
       {query.isSuccess ? (
         <DataTable
-          caption={current.label}
+          caption={t(current.labelKey)}
           columns={toColumns(rows)}
           rows={rows}
           getRowKey={(_, index) => index}
-          emptyMessage="Нет данных для отчёта"
+          emptyMessage={t('staff.logs.reports.empty')}
         />
       ) : null}
     </Panel>

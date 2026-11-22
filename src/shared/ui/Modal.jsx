@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import { Icon } from '@/shared/ui/Icon.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -65,7 +66,7 @@ export function Modal({ open, onClose, title, children, className }) {
         type="button"
         tabIndex={-1}
         className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
-        aria-label="Закрыть"
+        aria-label={t('common.actions.close')}
         onClick={onClose}
       />
       <div
@@ -89,7 +90,7 @@ export function Modal({ open, onClose, title, children, className }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть диалог"
+            aria-label={t('common.dialog.close')}
             className="-mt-1 -mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus)]"
           >
             <Icon name="close" />
