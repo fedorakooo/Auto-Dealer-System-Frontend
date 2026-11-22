@@ -24,6 +24,4 @@ export const appEnv =
       ? 'production'
       : 'development'
 export const isDev = appEnv === 'development'
-if (appEnv === 'production' && !apiBaseUrl) {
-  console.warn('VITE_API_BASE_URL is not set; API calls may fail. Configure it at build time.')
-}
+// Without VITE_API_BASE_URL the app calls same-origin /api/v1 (proxied by nginx in the image).

@@ -1,35 +1,36 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { useCustomerRecord } from '@/features/customers/hooks/useCustomerRecord.js'
 import {
-  fetchCustomOrdersByCustomer,
   createCustomOrder,
+  fetchCustomOrdersByCustomer,
 } from '@/features/custom-orders/customOrderService.js'
 import { customOrdersResponseSchema } from '@/features/custom-orders/schemas.js'
-import { fetchModels } from '@/features/models/modelService.js'
-import { modelsResponseSchema } from '@/features/models/schemas.js'
-import { fetchModel } from '@/features/models/modelService.js'
-import { modelResponseSchema } from '@/features/models/schemas.js'
+import { fetchModel, fetchModels } from '@/features/models/modelService.js'
+import { modelResponseSchema, modelsResponseSchema } from '@/features/models/schemas.js'
 import { fetchDealerships } from '@/features/dealerships/dealershipService.js'
 import { dealershipsResponseSchema } from '@/features/dealerships/schemas.js'
 import { QK } from '@/constants/queryKeys.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
-import { Button } from '@/shared/ui/Button.jsx'
-import { Select } from '@/shared/ui/Select.jsx'
-import { Input } from '@/shared/ui/Input.jsx'
-import { TextArea } from '@/shared/ui/Textarea.jsx'
-import { Spinner } from '@/shared/ui/Spinner.jsx'
-import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { parseApiError } from '@/services/api'
+import { Alert } from '@/shared/ui/Alert.jsx'
+import { Button } from '@/shared/ui/Button.jsx'
+import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
+import { Input } from '@/shared/ui/Input.jsx'
+import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { Panel } from '@/shared/ui/Panel.jsx'
+import { Select } from '@/shared/ui/Select.jsx'
+import { Spinner } from '@/shared/ui/Spinner.jsx'
+import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
+import { Textarea } from '@/shared/ui/Textarea.jsx'
 
 const formSchema = z.object({
-  model_id: z.string().uuid(),
-  dealership_id: z.coerce.number(),
-  exterior_color: z.string().min(1),
+  model_id: z.string().uuid('Выберите модель'),
+  dealership_id: z.coerce.number().positive('Выберите салон'),
+  exterior_color: z.string().min(1, 'Укажите цвет кузова'),
   interior_color: z.string().optional(),
   estimated_price: z.string().optional(),
   notes: z.string().optional(),
@@ -37,10 +38,10 @@ const formSchema = z.object({
 
 export function CustomOrdersPage() {
   const { api } = useAuth()
-  const { data: customer, isLoading: cl } = useCustomerRecord()
-  const qc = useQueryClient()
+  const { data: customer, isLoading: customerLoading } = useCustomerRecord()
+  const queryClient = useQueryClient()
 
-  const cq = useQuery({
+  const ordersQuery = useQuery({
     queryKey: ['custom-orders', customer?.id],
     queryFn: async () => {
       const raw = await fetchCustomOrdersByCustomer(api, customer.id)
@@ -49,7 +50,7 @@ export function CustomOrdersPage() {
     enabled: !!customer?.id,
   })
 
-  const mq = useQuery({
+  const modelsQuery = useQuery({
     queryKey: QK.models({ page: 1, co: 1 }),
     queryFn: async () => {
       const raw = await fetchModels(api, { page: 1, limit: 100 })
@@ -57,7 +58,7 @@ export function CustomOrdersPage() {
     },
   })
 
-  const dq = useQuery({
+  const dealershipsQuery = useQuery({
     queryKey: QK.dealerships({ page: 1, co: 1 }),
     queryFn: async () => {
       const raw = await fetchDealerships(api, { page: 1, limit: 100 })
@@ -65,10 +66,16 @@ export function CustomOrdersPage() {
     },
   })
 
-  const { register, handleSubmit, control } = useForm({ resolver: zodResolver(formSchema) })
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm({ resolver: zodResolver(formSchema) })
   const modelId = useWatch({ control, name: 'model_id' })
 
-  const modelQ = useQuery({
+  const selectedModelQuery = useQuery({
     queryKey: QK.model(modelId),
     queryFn: async () => {
       const raw = await fetchModel(api, modelId)
@@ -77,93 +84,139 @@ export function CustomOrdersPage() {
     enabled: !!modelId,
   })
 
-  const mut = useMutation({
+  const mutation = useMutation({
     mutationFn: async (values) => {
-      const m = modelQ.data
-      if (!m || !customer) throw new Error('Выберите модель')
+      const model = selectedModelQuery.data
+      if (!model || !customer) throw new Error('Выберите модель')
       await createCustomOrder(api, {
         customer_id: customer.id,
         dealership_id: values.dealership_id,
         model_id: values.model_id,
-        engine_id: m.engine_id,
-        transmission_id: m.transmission_id,
+        engine_id: model.engine_id,
+        transmission_id: model.transmission_id,
         exterior_color: values.exterior_color,
         interior_color: values.interior_color || null,
         estimated_price: values.estimated_price ? values.estimated_price : null,
         notes: values.notes || null,
       })
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['custom-orders'] }),
+    onSuccess: () => {
+      reset()
+      queryClient.invalidateQueries({ queryKey: ['custom-orders'] })
+    },
   })
 
-  if (cl) return <Spinner />
-  if (!customer) return <EmptyState title="Нужен профиль покупателя" />
+  if (customerLoading) return <Spinner />
+  if (!customer) {
+    return (
+      <EmptyState
+        icon="key"
+        title="Нужен профиль покупателя"
+        description="Индивидуальные заказы доступны только покупателям."
+      />
+    )
+  }
 
-  if (cq.isLoading) return <Spinner />
-  if (cq.isError)
-    return <ErrorFallback message={parseApiError(cq.error).message} onRetry={() => cq.refetch()} />
+  if (ordersQuery.isLoading) return <Spinner />
+  if (ordersQuery.isError) {
+    return (
+      <ErrorFallback
+        message={parseApiError(ordersQuery.error).message}
+        onRetry={() => ordersQuery.refetch()}
+      />
+    )
+  }
+
+  const orders = ordersQuery.data.custom_orders
+  const activeDealerships =
+    dealershipsQuery.data?.dealerships.filter((dealership) => dealership.is_active !== false) ?? []
 
   return (
     <div>
-      <PageHeader kicker="Индивидуальный заказ" title="Кастомные заказы" />
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {cq.data.custom_orders.map((o) => (
-          <li
-            key={o.id}
-            style={{
-              padding: '0.75rem',
-              marginBottom: '0.5rem',
-              border: '1px solid var(--color-border)',
-              borderRadius: 4,
-            }}
-          >
-            {o.status} · {o.exterior_color}
-          </li>
-        ))}
-      </ul>
+      <PageHeader
+        kicker="Индивидуальный заказ"
+        title="Заказ по вашей конфигурации"
+        subtitle="Выберите модель и цвет — мы передадим заявку на завод."
+      />
 
-      <section style={{ marginTop: '2rem', maxWidth: 440 }}>
-        <h2 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Новый заказ</h2>
-        <form onSubmit={handleSubmit((v) => mut.mutate(v))}>
-          <Select id="model_id" label="Модель" error={undefined} {...register('model_id')}>
-            <option value="">—</option>
-            {mq.data?.models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
+      {orders.length ? (
+        <ul className="m-0 mb-10 list-none space-y-3 p-0">
+          {orders.map((order) => (
+            <li
+              key={order.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-4 shadow-[var(--shadow-card)]"
+            >
+              <span className="font-medium text-[var(--color-text)]">{order.exterior_color}</span>
+              <StatusBadge status={order.status} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          className="mb-10"
+          icon="key"
+          title="Индивидуальных заказов пока нет"
+          description="Оформите первый заказ в форме ниже."
+        />
+      )}
+
+      <Panel title="Новый заказ" className="max-w-xl">
+        <form onSubmit={handleSubmit((values) => mutation.mutate(values))} noValidate>
+          <Select
+            id="model_id"
+            label="Модель"
+            error={errors.model_id?.message}
+            {...register('model_id')}
+          >
+            <option value="">Выберите модель</option>
+            {modelsQuery.data?.models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name}
               </option>
             ))}
           </Select>
-          <Select id="dealership_id" label="Салон" {...register('dealership_id')}>
-            <option value="">—</option>
-            {dq.data?.dealerships
-              .filter((d) => d.is_active !== false)
-              .map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
+          <Select
+            id="dealership_id"
+            label="Салон"
+            error={errors.dealership_id?.message}
+            {...register('dealership_id')}
+          >
+            <option value="">Выберите салон</option>
+            {activeDealerships.map((dealership) => (
+              <option key={dealership.id} value={dealership.id}>
+                {dealership.name}
+              </option>
+            ))}
           </Select>
-          {modelQ.data ? (
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-              Двигатель / КПП: {modelQ.data.engine_id} / {modelQ.data.transmission_id} (из модели)
+          {selectedModelQuery.data ? (
+            <p className="mb-4 text-sm">
+              Двигатель / КПП: {selectedModelQuery.data.engine_id} /{' '}
+              {selectedModelQuery.data.transmission_id} (из модели)
             </p>
           ) : null}
-          <Input id="exterior_color" label="Цвет кузова" {...register('exterior_color')} />
+          <Input
+            id="exterior_color"
+            label="Цвет кузова"
+            error={errors.exterior_color?.message}
+            {...register('exterior_color')}
+          />
           <Input id="interior_color" label="Цвет салона" {...register('interior_color')} />
           <Input
             id="estimated_price"
             label="Ориентировочная цена"
+            inputMode="decimal"
             {...register('estimated_price')}
           />
-          <TextArea id="co-notes" label="Примечания" {...register('notes')} />
-          {mut.isError ? (
-            <p className="form-error">{parseApiError(mut.error).message}</p>
+          <Textarea id="co-notes" label="Примечания" {...register('notes')} />
+          {mutation.isError ? (
+            <Alert variant="danger">{parseApiError(mutation.error).message}</Alert>
           ) : null}
-          <Button type="submit" disabled={mut.isPending || !modelQ.data}>
-            Отправить
+          {mutation.isSuccess ? <Alert variant="success">Заказ отправлен.</Alert> : null}
+          <Button type="submit" loading={mutation.isPending} disabled={!selectedModelQuery.data}>
+            Отправить заказ
           </Button>
         </form>
-      </section>
+      </Panel>
     </div>
   )
 }

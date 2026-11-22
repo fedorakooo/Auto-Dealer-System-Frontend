@@ -1,30 +1,211 @@
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
-import { fetchOperationList, createWithIdempotency, actionIdempotencyKey, clearActionIdempotencyKey, mutateOperation } from '@/features/operations/operationsService.js'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import {
+  actionIdempotencyKey,
+  clearActionIdempotencyKey,
+  createWithIdempotency,
+  fetchOperationList,
+  mutateOperation,
+} from '@/features/operations/operationsService.js'
+import { parseApiError } from '@/services/api/errors.js'
+import { QK } from '@/constants/queryKeys.js'
+import { endpoints } from '@/services/api/endpoints.js'
+import { applyApiFieldErrors } from '@/lib/formErrors.js'
+import { formatDateTime } from '@/lib/format.js'
+import { Alert } from '@/shared/ui/Alert.jsx'
 import { Button } from '@/shared/ui/Button.jsx'
-import { Input } from '@/shared/ui/Input.jsx'
-import { Select } from '@/shared/ui/Select.jsx'
-import { TextArea } from '@/shared/ui/Textarea.jsx'
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog.jsx'
 import { EmptyState } from '@/shared/ui/EmptyState.jsx'
+import { Input } from '@/shared/ui/Input.jsx'
+import { PageHeader } from '@/shared/ui/PageHeader.jsx'
+import { Panel } from '@/shared/ui/Panel.jsx'
 import { Spinner } from '@/shared/ui/Spinner.jsx'
 import { StatusBadge } from '@/shared/ui/StatusBadge.jsx'
-import { parseApiError } from '@/services/api/errors.js'
-import { applyApiFieldErrors } from '@/lib/formErrors.js'
+import { Textarea } from '@/shared/ui/Textarea.jsx'
+import { t } from '@/shared/i18n/index.js'
 
-const schema = z.object({ dealership_id: z.coerce.number().positive('Выберите дилерский центр'), vehicle_id: z.string().uuid().optional().or(z.literal('')), requested_datetime: z.string().min(1, 'Выберите дату и время'), notes: z.string().max(1000).optional() })
+const IDEMPOTENCY_SCOPE = 'service-appointment'
+
+const schema = z.object({
+  dealership_id: z.coerce
+    .number()
+    .positive({ error: () => t('account.service.dealershipIdRequired') }),
+  vehicle_id: z
+    .string()
+    .uuid({ error: () => t('account.service.vehicleIdInvalid') })
+    .optional()
+    .or(z.literal('')),
+  requested_datetime: z.string().min(1, { error: () => t('account.service.dateTimeRequired') }),
+  notes: z
+    .string()
+    .max(1000, { error: () => t('account.service.notesTooLong') })
+    .optional(),
+})
+
 export function ServiceAppointmentsPage() {
-  const { api } = useAuth(); const qc = useQueryClient()
-  const appointments = useQuery({ queryKey: ['service-appointments'], queryFn: () => fetchOperationList(api, '/service/appointments', { limit: 50 }) })
-  const catalog = useQuery({ queryKey: ['service-catalog'], queryFn: () => fetchOperationList(api, '/service/catalog', { limit: 100 }) })
-  const { register, handleSubmit, setError, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
-  const create = useMutation({ mutationFn: (v) => createWithIdempotency(api, '/service/appointments', { ...v, vehicle_id: v.vehicle_id || null, requested_datetime: new Date(v.requested_datetime).toISOString(), notes: v.notes || null }, actionIdempotencyKey('service-appointment')), onSuccess: () => { clearActionIdempotencyKey('service-appointment'); qc.invalidateQueries({ queryKey: ['service-appointments'] }) }, onError: (error) => applyApiFieldErrors(error, setError) })
-  const cancel = useMutation({ mutationFn: (id) => mutateOperation(api, 'delete', `/service/appointments/${id}`), onSuccess: () => qc.invalidateQueries({ queryKey: ['service-appointments'] }) })
-  const items = Array.isArray(appointments.data) ? appointments.data : []
-  return <div><PageHeader kicker="После продажи" title="Сервисные записи" subtitle="Запишитесь на обслуживание; повторная отправка защищена ключом идемпотентности." />
-    {appointments.isLoading ? <Spinner /> : items.length ? <div className="space-y-3">{items.map((x) => <article key={x.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3"><strong>{x.requested_datetime ? new Date(x.requested_datetime).toLocaleString('ru-RU') : 'Запись'}</strong><StatusBadge status={x.status} /></div><p className="mt-2 text-sm">{x.notes || 'Без комментария'}</p>{x.status === 'requested' ? <Button variant="danger" size="sm" onClick={() => { if (window.confirm('Отменить сервисную запись?')) cancel.mutate(x.id) }} disabled={cancel.isPending}>Отменить</Button> : null}</article>)}</div> : <EmptyState title="Сервисных записей пока нет" description="Оформите первую запись ниже." />}
-    <section className="mt-10 max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2>Новая сервисная запись</h2><form onSubmit={handleSubmit((v) => create.mutate(v))} noValidate><Input id="service-dealer" label="ID дилерского центра" inputMode="numeric" error={errors.dealership_id?.message} {...register('dealership_id')} /><Input id="service-vehicle" label="ID автомобиля (необязательно)" hint="UUID автомобиля из вашего заказа" error={errors.vehicle_id?.message} {...register('vehicle_id')} /><Input id="service-time" label="Дата и время" type="datetime-local" error={errors.requested_datetime?.message} {...register('requested_datetime')} /><TextArea id="service-notes" label="Комментарий" error={errors.notes?.message} {...register('notes')} />{catalog.data ? <p className="text-sm">Доступно работ в каталоге: {Array.isArray(catalog.data) ? catalog.data.length : '—'}.</p> : null}{create.isError ? <p role="alert" className="text-sm text-red-700">{parseApiError(create.error).message}</p> : null}<Button type="submit" disabled={create.isPending}>{create.isPending ? 'Отправка…' : 'Создать запись'}</Button></form></section></div>
+  const { api } = useAuth()
+  const queryClient = useQueryClient()
+  const [cancelTarget, setCancelTarget] = useState(null)
+
+  const appointmentsQuery = useQuery({
+    queryKey: QK.serviceAppointments,
+    queryFn: () => fetchOperationList(api, endpoints.serviceAppointments, { limit: 50 }),
+  })
+  const catalogQuery = useQuery({
+    queryKey: QK.serviceCatalog,
+    queryFn: () => fetchOperationList(api, endpoints.serviceCatalog, { limit: 100 }),
+  })
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm({ resolver: zodResolver(schema) })
+
+  const createMutation = useMutation({
+    mutationFn: (values) =>
+      createWithIdempotency(
+        api,
+        endpoints.serviceAppointments,
+        {
+          ...values,
+          vehicle_id: values.vehicle_id || null,
+          requested_datetime: new Date(values.requested_datetime).toISOString(),
+          notes: values.notes || null,
+        },
+        actionIdempotencyKey(IDEMPOTENCY_SCOPE)
+      ),
+    onSuccess: () => {
+      clearActionIdempotencyKey(IDEMPOTENCY_SCOPE)
+      reset()
+      queryClient.invalidateQueries({ queryKey: QK.serviceAppointments })
+    },
+    onError: (error) => applyApiFieldErrors(error, setError),
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: (id) => mutateOperation(api, 'delete', endpoints.serviceAppointment(id)),
+    onSuccess: () => {
+      setCancelTarget(null)
+      queryClient.invalidateQueries({ queryKey: QK.serviceAppointments })
+    },
+  })
+
+  const appointments = Array.isArray(appointmentsQuery.data) ? appointmentsQuery.data : []
+  const catalogSize = Array.isArray(catalogQuery.data) ? catalogQuery.data.length : null
+
+  return (
+    <div>
+      <PageHeader
+        kicker={t('account.service.kicker')}
+        title={t('account.service.title')}
+        subtitle={t('account.service.subtitle')}
+      />
+
+      {appointmentsQuery.isLoading ? <Spinner /> : null}
+      {appointmentsQuery.isError ? (
+        <Alert variant="danger">{parseApiError(appointmentsQuery.error).message}</Alert>
+      ) : null}
+      {appointmentsQuery.isSuccess && !appointments.length ? (
+        <EmptyState
+          icon="wrench"
+          title={t('account.service.emptyTitle')}
+          description={t('account.service.emptyDescription')}
+        />
+      ) : null}
+      {appointments.length ? (
+        <ul className="m-0 list-none space-y-3 p-0">
+          {appointments.map((appointment) => (
+            <li
+              key={appointment.id}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)] sm:px-5"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <strong className="text-[var(--color-text)]">
+                  {appointment.requested_datetime
+                    ? formatDateTime(appointment.requested_datetime)
+                    : t('account.service.appointment')}
+                </strong>
+                <StatusBadge status={appointment.status} />
+              </div>
+              <p className="mt-2 mb-0 text-sm">
+                {appointment.notes || t('account.service.noComment')}
+              </p>
+              {appointment.status === 'requested' ? (
+                <Button
+                  className="mt-3"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCancelTarget(appointment.id)}
+                >
+                  {t('account.service.cancel')}
+                </Button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <Panel title={t('account.service.newAppointment')} className="mt-10 max-w-xl">
+        <form onSubmit={handleSubmit((values) => createMutation.mutate(values))} noValidate>
+          <Input
+            id="service-dealer"
+            label={t('account.service.dealershipId')}
+            inputMode="numeric"
+            error={errors.dealership_id?.message}
+            {...register('dealership_id')}
+          />
+          <Input
+            id="service-vehicle"
+            label={t('account.service.vehicleId')}
+            hint={t('account.service.vehicleIdHint')}
+            error={errors.vehicle_id?.message}
+            {...register('vehicle_id')}
+          />
+          <Input
+            id="service-time"
+            label={t('account.common.dateTime')}
+            type="datetime-local"
+            error={errors.requested_datetime?.message}
+            {...register('requested_datetime')}
+          />
+          <Textarea
+            id="service-notes"
+            label={t('account.common.comment')}
+            error={errors.notes?.message}
+            {...register('notes')}
+          />
+          {catalogSize !== null ? (
+            <p className="text-sm">{t('account.service.catalogSize', { count: catalogSize })}</p>
+          ) : null}
+          {createMutation.isError ? (
+            <Alert variant="danger">{parseApiError(createMutation.error).message}</Alert>
+          ) : null}
+          <Button type="submit" loading={createMutation.isPending}>
+            {createMutation.isPending
+              ? t('account.service.submitting')
+              : t('account.service.submit')}
+          </Button>
+        </form>
+      </Panel>
+
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        title={t('account.service.cancelDialog.title')}
+        description={t('account.service.cancelDialog.description')}
+        confirmLabel={t('account.service.cancelDialog.confirm')}
+        cancelLabel={t('account.service.cancelDialog.dismiss')}
+        destructive
+        loading={cancelMutation.isPending}
+        onConfirm={() => cancelMutation.mutate(cancelTarget)}
+        onCancel={() => setCancelTarget(null)}
+      />
+    </div>
+  )
 }

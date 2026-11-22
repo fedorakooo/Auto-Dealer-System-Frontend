@@ -1,92 +1,88 @@
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes.js'
 import { Container } from '@/shared/ui/Container.jsx'
-import {
-  CONTACT_EMAIL,
-  CONTACT_PHONE_DISPLAY,
-  CONTACT_PHONE_E164,
-} from '@/shared/config/contact.js'
+import { Brand } from '@/shared/ui/Brand.jsx'
+import { useBrand } from '@/features/brand/brandContext.js'
+import { ContactList, SocialLinks } from '@/features/brand/components/ContactList.jsx'
+import { t, localize } from '@/shared/i18n/index.js'
+
+const footerLinkClass = 'text-slate-400 transition-colors hover:text-white'
+const headingClass = 'mb-0 text-xs font-semibold tracking-[0.18em] text-white uppercase'
 
 export function Footer() {
+  const brand = useBrand()
+  const { contacts } = brand
   return (
     <footer className="border-t border-white/10 bg-slate-950 text-white">
       <Container className="py-12 sm:py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
           <div className="max-w-xs">
-            <Link
-              to={ROUTES.home}
-              className="inline-flex items-center gap-3 text-white hover:text-white"
-            >
-              <span
-                className="grid h-10 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-xs font-bold"
-                aria-hidden="true"
-              >
-                AD
-              </span>
-              <span className="text-sm font-semibold tracking-[0.12em]">AUTO DEALER</span>
-            </Link>
-            <p className="mt-4 text-sm leading-6 text-slate-400">
-              Каталог автомобилей, дилерские центры и сервисные услуги в едином цифровом
-              пространстве.
+            <Brand showTagline={false} alwaysShowName />
+            <p className="mt-4 mb-0 text-sm leading-6 text-slate-400">
+              {t('layout.footer.tagline')}
             </p>
           </div>
+
+          <nav aria-label={t('layout.footer.navLabel')}>
+            <h2 className={headingClass}>{t('layout.footer.navigation')}</h2>
+            <ul className="m-0 mt-4 list-none space-y-3 p-0 text-sm">
+              <li>
+                <Link to={ROUTES.models} className={footerLinkClass}>
+                  {t('layout.footer.models')}
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.vehicles} className={footerLinkClass}>
+                  {t('layout.footer.vehicles')}
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.dealerships} className={footerLinkClass}>
+                  {t('layout.footer.dealerships')}
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.company} className={footerLinkClass}>
+                  {t('layout.footer.company')}
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
           <div>
-            <h3 className="text-xs font-semibold tracking-[0.18em] text-white uppercase">
-              Навигация
-            </h3>
-            <ul className="mt-4 space-y-3 text-sm text-slate-400">
-              <li>
-                <Link to={ROUTES.models} className="hover:text-white">
-                  Модельный ряд
-                </Link>
-              </li>
-              <li>
-                <Link to={ROUTES.vehicles} className="hover:text-white">
-                  Автомобили в наличии
-                </Link>
-              </li>
-              <li>
-                <Link to={ROUTES.company} className="hover:text-white">
-                  Компания и контакты
-                </Link>
-              </li>
+            <h2 className={headingClass}>{t('layout.footer.workingHours')}</h2>
+            <ul className="m-0 mt-4 list-none space-y-3 p-0 text-sm text-slate-400">
+              {contacts.working_hours.map((row) => (
+                <li key={localize(row.days)}>
+                  {localize(row.days)}: {localize(row.hours)}
+                </li>
+              ))}
+              {contacts.service_hours_note ? (
+                <li className="pt-1 text-xs text-slate-500">
+                  {localize(contacts.service_hours_note)}
+                </li>
+              ) : null}
             </ul>
           </div>
 
           <div>
-            <h3 className="text-xs font-semibold tracking-[0.18em] text-white uppercase">
-              Время работы
-            </h3>
-            <ul className="mt-4 space-y-3 text-sm text-slate-400">
-              <li>Пн–Пт: 09:00 – 20:00</li>
-              <li>Сб–Вс: 10:00 – 16:00</li>
-              <li className="pt-1 text-xs text-slate-500">Сервис: уточняйте в салоне</li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-semibold tracking-[0.18em] text-white uppercase">
-              Контакты
-            </h3>
-            <ul className="mt-4 space-y-3 text-sm text-slate-400">
-              <li>
-                <a href={`tel:${CONTACT_PHONE_E164}`} className="hover:text-white">
-                  {CONTACT_PHONE_DISPLAY}
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-white">
-                  {CONTACT_EMAIL}
-                </a>
-              </li>
-              <li className="pt-1">г. Минск, ул. Примерная, 1</li>
-            </ul>
+            <h2 className={headingClass}>{t('layout.footer.contacts')}</h2>
+            <ContactList
+              className="mt-4 space-y-3 text-sm text-slate-400"
+              linkClassName={footerLinkClass}
+              iconClassName="h-4 w-4 text-slate-500"
+            />
+            <SocialLinks className="mt-4 text-sm" linkClassName={footerLinkClass} />
           </div>
         </div>
 
         <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
-          <p className="mb-0 text-slate-500">© {new Date().getFullYear()} Auto Dealer System</p>
-          <p className="mb-0 text-slate-500">Минск · Беларусь</p>
+          <p className="mb-0 text-slate-500">
+            © {new Date().getFullYear()} {brand.legal_name}
+          </p>
+          {contacts.location_line ? (
+            <p className="mb-0 text-slate-500">{localize(contacts.location_line)}</p>
+          ) : null}
         </div>
       </Container>
     </footer>

@@ -1,5 +1,6 @@
 import { useRouteError } from 'react-router-dom'
 import { Button } from '@/shared/ui/Button.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 export function RouteErrorFallback() {
   const err = useRouteError()
@@ -12,10 +13,12 @@ export function RouteErrorFallback() {
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-xl font-semibold text-[var(--color-text)]">Ошибка маршрута</h1>
+      <h1 className="text-xl font-semibold text-[var(--color-text)]">
+        {t('common.errors.routeError')}
+      </h1>
       <p className="max-w-md text-sm text-[var(--color-text-muted)]">{message}</p>
       <Button type="button" onClick={() => window.location.assign('/')}>
-        На главную
+        {t('common.actions.toHome')}
       </Button>
     </div>
   )

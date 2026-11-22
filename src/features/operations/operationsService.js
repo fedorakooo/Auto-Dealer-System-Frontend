@@ -27,10 +27,3 @@ export function actionIdempotencyKey(scope) {
 export function clearActionIdempotencyKey(scope) {
   sessionStorage.removeItem(`ads:idempotency:${scope}`)
 }
-
-export async function uploadModelMedia(api, formData) {
-  const { data } = await api.post('/model-media/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  return data
-}

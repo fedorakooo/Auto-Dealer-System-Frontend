@@ -16,6 +16,7 @@ export const vehicleResponseSchema = z.object({
   updated_at: z.string().nullable().optional(),
   model_name: z.string().nullable().optional(),
   images: z.array(z.string()).nullable().optional(),
+  model_images: z.array(z.string()).nullable().optional(),
 })
 
 export const vehiclesResponseSchema = z.object({

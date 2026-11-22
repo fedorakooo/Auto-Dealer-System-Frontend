@@ -3,20 +3,22 @@ import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { useCustomerRecord } from '@/features/customers/hooks/useCustomerRecord.js'
 import { fetchFavorites } from '@/features/favorites/favoriteService.js'
 import { favoritesResponseSchema } from '@/features/favorites/schemas.js'
+import { VehicleCard } from '@/features/vehicles/components/VehicleCard.jsx'
 import { QK } from '@/constants/queryKeys.js'
+import { ROUTES } from '@/constants/routes.js'
+import { parseApiError } from '@/services/api'
+import { LinkButton } from '@/shared/ui/Button.jsx'
+import { EmptyState } from '@/shared/ui/EmptyState.jsx'
+import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
 import { PageHeader } from '@/shared/ui/PageHeader.jsx'
 import { Spinner } from '@/shared/ui/Spinner.jsx'
-import { EmptyState } from '@/shared/ui/EmptyState.jsx'
 import { Stack } from '@/shared/ui/Stack.jsx'
-import { VehicleCard } from '@/features/vehicles/components/VehicleCard.jsx'
-import { parseApiError } from '@/services/api'
-import { ErrorFallback } from '@/shared/ui/ErrorFallback.jsx'
 
 export function FavoritesPage() {
   const { api } = useAuth()
-  const { data: customer, isLoading: cl } = useCustomerRecord()
+  const { data: customer, isLoading: customerLoading } = useCustomerRecord()
 
-  const q = useQuery({
+  const query = useQuery({
     queryKey: QK.favorites(customer?.id),
     queryFn: async () => {
       const raw = await fetchFavorites(api, customer.id)
@@ -25,28 +27,38 @@ export function FavoritesPage() {
     enabled: !!customer?.id,
   })
 
-  if (cl) return <Spinner />
-  if (!customer)
+  if (customerLoading) return <Spinner />
+  if (!customer) {
     return (
       <EmptyState
+        icon="heart"
         title="Нет профиля покупателя"
-        description="Нужна запись customer для избранного."
+        description="Для списка избранного нужна запись покупателя."
       />
     )
+  }
 
-  if (q.isLoading) return <Spinner />
-  if (q.isError)
-    return <ErrorFallback message={parseApiError(q.error).message} onRetry={() => q.refetch()} />
+  if (query.isLoading) return <Spinner />
+  if (query.isError) {
+    return (
+      <ErrorFallback message={parseApiError(query.error).message} onRetry={() => query.refetch()} />
+    )
+  }
 
   return (
     <div>
       <PageHeader kicker="Избранное" title="Сохранённые автомобили" />
-      {!q.data.vehicles.length ? (
-        <EmptyState title="Пусто" description="Добавьте авто из карточки." />
+      {!query.data.vehicles.length ? (
+        <EmptyState
+          icon="heart"
+          title="Список пуст"
+          description="Добавляйте автомобили в избранное из их карточек."
+          action={<LinkButton to={ROUTES.vehicles}>Перейти в каталог</LinkButton>}
+        />
       ) : (
         <Stack variant="grid3">
-          {q.data.vehicles.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} />
+          {query.data.vehicles.map((vehicle) => (
+            <VehicleCard key={vehicle.id} vehicle={vehicle} />
           ))}
         </Stack>
       )}

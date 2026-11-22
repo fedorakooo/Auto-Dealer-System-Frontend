@@ -1,30 +1,33 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth.js'
 import { parseApiError } from '@/services/api'
-import { Button } from '@/shared/ui/Button.jsx'
-import { Input } from '@/shared/ui/Input.jsx'
-import { PageHeader } from '@/shared/ui/PageHeader.jsx'
 import { ROUTES } from '@/constants/routes.js'
-import { SEED_EMPLOYEE_EMAILS } from '@/shared/config/seedEmployees.js'
+import { useBrand } from '@/features/brand/brandContext.js'
 import { isDev } from '@/shared/config/env.js'
-import { useState } from 'react'
+import { Alert } from '@/shared/ui/Alert.jsx'
+import { AuthCard } from '@/shared/ui/AuthCard.jsx'
+import { Button } from '@/shared/ui/Button.jsx'
+import { Input, PasswordInput } from '@/shared/ui/Input.jsx'
+import { t } from '@/shared/i18n/index.js'
 
 const schema = z.object({
-  email: z.string().email('Некорректный email'),
-  password: z.string().min(1, 'Введите пароль'),
+  email: z.string().email({ error: () => t('auth.validation.email') }),
+  password: z.string().min(1, { error: () => t('auth.validation.passwordRequired') }),
 })
 
 export function LoginPage() {
   const { login } = useAuth()
+  const brand = useBrand()
   const navigate = useNavigate()
   const location = useLocation()
   const [formError, setFormError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
 
   const from = location.state?.from?.pathname || ROUTES.account
+  const justRegistered = Boolean(location.state?.registered)
 
   const {
     register,
@@ -37,18 +40,25 @@ export function LoginPage() {
     try {
       await login(values.email, values.password)
       navigate(from, { replace: true })
-    } catch (e) {
-      setFormError(parseApiError(e).message)
+    } catch (error) {
+      setFormError(parseApiError(error).message)
     }
   }
 
   return (
-    <div style={{ maxWidth: 420 }}>
-      <PageHeader
-        kicker="Вход"
-        title="Авторизация"
-        subtitle="Используйте email и пароль учётной записи."
-      />
+    <AuthCard
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
+      footer={
+        <>
+          {t('auth.login.noAccount')}{' '}
+          <Link to={ROUTES.register} className="link">
+            {t('auth.login.registerLink')}
+          </Link>
+        </>
+      }
+    >
+      {justRegistered ? <Alert variant="success">{t('auth.login.registered')}</Alert> : null}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Input
           id="email"
@@ -58,32 +68,27 @@ export function LoginPage() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <div className="relative">
-          <Input id="password" label="Пароль" type={showPassword ? 'text' : 'password'} autoComplete="current-password" error={errors.password?.message} {...register('password')} />
-          <button type="button" className="absolute right-3 top-9 text-sm font-medium text-[var(--color-info)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus)]" onClick={() => setShowPassword((value) => !value)} aria-pressed={showPassword}>
-            {showPassword ? 'Скрыть' : 'Показать'}
-          </button>
-        </div>
-        {formError ? (
-          <p role="alert" className="form-error">
-            {formError}
-          </p>
-        ) : null}
-        <Button type="submit" fullWidth disabled={isSubmitting}>
-          {isSubmitting ? 'Вход…' : 'Войти'}
+        <PasswordInput
+          id="password"
+          label={t('auth.password')}
+          autoComplete="current-password"
+          error={errors.password?.message}
+          {...register('password')}
+        />
+        {formError ? <Alert variant="danger">{formError}</Alert> : null}
+        <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
+          {isSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', fontSize: '0.9rem' }}>
-        Нет аккаунта? <Link to={ROUTES.register}>Регистрация</Link>
-      </p>
-      {isDev ? (
-        <p style={{ marginTop: '1.25rem', fontSize: '0.82rem', lineHeight: 1.45, opacity: 0.75 }}>
-          Локальная разработка: сотрудники создаются из{' '}
-          <code style={{ fontSize: '0.9em' }}>employees.yaml</code> при старте API; email:{' '}
-          {SEED_EMPLOYEE_EMAILS.join(', ')}; пароли — поле{' '}
-          <code style={{ fontSize: '0.9em' }}>password</code> в том же файле.
+      {isDev || brand.demo.show_login_hint ? (
+        <p className="mt-6 mb-0 rounded-lg bg-[var(--color-surface-subtle)] p-3 text-xs leading-5">
+          {t('auth.login.demoHintStart')}
+          <code>employees.yaml</code>
+          {t('auth.login.demoHintMiddle')}
+          <code>password</code>
+          {t('auth.login.demoHintEnd')}
         </p>
       ) : null}
-    </div>
+    </AuthCard>
   )
 }

@@ -3,11 +3,13 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   vehicles: '/vehicles',
-  vehicleDetail: (id) => `/vehicles/${id}`,
+  vehiclesOfModel: (modelId) => `/vehicles?model_id=${modelId}`,
   models: '/models',
   modelDetail: (id) => `/models/${id}`,
+  vehicleDetail: (modelId, id) => `/models/${modelId}/vehicles/${id}`,
   dealerships: '/dealerships',
   dealershipDetail: (id) => `/dealerships/${id}`,
+  dealershipsInCity: (cityId) => `/dealerships?city=${cityId}`,
   company: '/company',
   reviews: '/reviews',
   account: '/account',
@@ -23,6 +25,15 @@ export const ROUTES = {
   staffOrders: '/staff/orders',
   staffOperations: '/staff/operations',
   staffInventory: '/staff/inventory',
+  staffCatalog: '/staff/catalog',
+  staffMedia: '/staff/media',
+  /** Media page preselected on a model's own photos, or on one vehicle of it. */
+  staffMediaOf: (modelId, vehicleId) =>
+    vehicleId
+      ? `/staff/media?model=${modelId}&vehicle=${vehicleId}`
+      : `/staff/media?model=${modelId}`,
+  staffDealerships: '/staff/dealerships',
+  staffDealership: (id) => `/staff/dealerships?dealership=${id}`,
   logs: '/staff/logs',
   forbidden: '/forbidden',
 }
